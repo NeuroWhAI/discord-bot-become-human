@@ -4,8 +4,10 @@ const env = await loadEnv();
 import { Client, Collection, Events, GatewayIntentBits } from 'discord.js';
 import { ChatBuffer } from './chat/chat-buffer.ts';
 import { ChatMessage } from './chat/chat-message.ts';
+import { AgentManager } from './ai/agent-manager.ts';
 
 const chatBuffer = new ChatBuffer();
+const agentManager = new AgentManager();
 
 const client = new Client({
   intents: [
@@ -47,7 +49,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
 });
 
 client.on(Events.MessageCreate, async (msg) => {
-  if (env.CHANNEL_WHITELIST && !env.CHANNEL_WHITELIST.includes(msg.channelId)) {
+  const channelId = msg.channelId;
+  if (env.CHANNEL_WHITELIST && !env.CHANNEL_WHITELIST.includes(channelId)) {
     return;
   }
 
@@ -58,11 +61,16 @@ client.on(Events.MessageCreate, async (msg) => {
 
   if (msg.author.id === botUser.id) return;
 
+  console.log(
+    `${msg.author.tag} — ${msg.createdAt.toLocaleTimeString()}\n${msg.cleanContent}`,
+  );
+
   chatBuffer.append(
-    msg.channelId,
+    channelId,
     new ChatMessage({
-      author: msg.author.tag,
-      content: msg.content,
+      authorId: msg.author.tag,
+      author: msg.member ? msg.member.displayName : msg.author.displayName,
+      content: msg.cleanContent,
       date: msg.createdAt,
     }),
   );
@@ -70,9 +78,17 @@ client.on(Events.MessageCreate, async (msg) => {
   const botMentioned = msg.mentions.users.some((user) =>
     user.id === botUser.id
   );
-  if (botMentioned) {
-    const messages = chatBuffer.flush(msg.channelId);
-    await msg.reply({ content: 'Hello! ' + messages.length + ' messages.' });
+  if (botMentioned || agentManager.checkRunning(channelId)) {
+    const messages = chatBuffer.flush(channelId);
+    if (messages.length > 0) {
+      const respond = await agentManager.chat(channelId, messages);
+      if (respond) {
+        console.log(
+          `${botUser.tag}\n${respond}`,
+        );
+        await msg.channel.send({ content: respond });
+      }
+    }
   }
 });
 

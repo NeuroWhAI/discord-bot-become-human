@@ -1,7 +1,7 @@
 import { ChatMessage } from './chat-message.ts';
 
 export class ChatBuffer {
-  private bufferTable: Map<string, ChatMessage[]> = new Map();
+  private readonly bufferTable: Map<string, ChatMessage[]> = new Map();
 
   public append(channelId: string, message: ChatMessage) {
     let buffer = this.bufferTable.get(channelId);
@@ -16,7 +16,7 @@ export class ChatBuffer {
 
       // 하나로 합칠 수 있는 메시지는 합침.
       if (
-        latestMsg.author === message.author &&
+        latestMsg.authorId === message.authorId &&
         elapsedTime < 30 * 1000
       ) {
         if (latestMsg.content) {
