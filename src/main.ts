@@ -8,6 +8,7 @@ import { AgentManager } from './ai/agent-manager.ts';
 
 const chatBuffer = new ChatBuffer();
 const agentManager = new AgentManager();
+const chatTriggers = new Map<string, number>();
 
 const client = new Client({
   intents: [
@@ -75,12 +76,36 @@ client.on(Events.MessageCreate, async (msg) => {
     }),
   );
 
+  if (msg.author.bot) {
+    return;
+  }
+
+  let triggerId = chatTriggers.get(channelId);
+  if (triggerId != null) {
+    clearTimeout(triggerId);
+    chatTriggers.delete(channelId);
+  }
+
   const botMentioned = msg.mentions.users.some((user) =>
     user.id === botUser.id
   );
-  if (botMentioned || agentManager.checkRunning(channelId)) {
+  if (botMentioned) {
     const messages = chatBuffer.flush(channelId);
-    if (messages.length > 0) {
+    const respond = await agentManager.chat(channelId, messages);
+    if (respond) {
+      console.log(
+        `${botUser.tag}\n${respond}`,
+      );
+      await msg.channel.send({ content: respond });
+    }
+  } else {
+    const agentRunning = agentManager.checkRunning(channelId);
+    const triggerTime = agentRunning ? 10 * 1000 : 60 * 1000;
+
+    triggerId = setTimeout(async () => {
+      chatTriggers.delete(channelId);
+
+      const messages = chatBuffer.flush(channelId);
       const respond = await agentManager.chat(channelId, messages);
       if (respond) {
         console.log(
@@ -88,7 +113,8 @@ client.on(Events.MessageCreate, async (msg) => {
         );
         await msg.channel.send({ content: respond });
       }
-    }
+    }, triggerTime);
+    chatTriggers.set(channelId, triggerId);
   }
 });
 

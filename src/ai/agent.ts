@@ -65,8 +65,6 @@ export class Agent {
       }
       this.typing = true;
 
-      this.running = true;
-
       const completion = await this.openai.chat.completions.create({
         model: this.chatModel,
         messages: this.messages,
@@ -83,6 +81,8 @@ export class Agent {
         console.log('STOP');
         this.reset();
         resContent = resContent.substring(0, resContent.length - 4);
+      } else {
+        this.running = true;
       }
 
       this.messages.push({
