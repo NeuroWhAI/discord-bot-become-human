@@ -1,9 +1,20 @@
 import OpenAI from 'openai';
 import { ChatMessage } from '../chat/chat-message.ts';
 
+interface ChatCompletionContentPartText {
+  text: string;
+  type: 'text';
+}
+interface ChatCompletionContentPartImage {
+  image_url: { url: string };
+  type: 'image_url';
+}
+type ChatCompletionContentPart =
+  | ChatCompletionContentPartText
+  | ChatCompletionContentPartImage;
 interface AgentMessage {
   role: 'system' | 'assistant' | 'user';
-  content: string;
+  content: string | ChatCompletionContentPart[];
   name?: string;
 }
 
@@ -47,18 +58,28 @@ export class Agent {
     try {
       // 새 대화 이력 추가.
       for (const msg of newMessages) {
-        let content = `${msg.author} — ${localeDate(msg.date)}\n${msg.content}`;
+        let text = `${msg.author} — ${localeDate(msg.date)}\n${msg.content}`;
+        let imageUrls: string[];
 
         if (msg.refMessage) {
           const refMsg = msg.refMessage;
-          content =
+          text =
             `${refMsg.author} — past\n${refMsg.content}\n--- Referred to by the following message ---\n` +
-            content;
+            text;
+          imageUrls = [...refMsg.imageUrls, ...msg.imageUrls];
+        } else {
+          imageUrls = msg.imageUrls;
         }
 
         this.messages.push({
           role: 'user',
-          content,
+          content: [
+            { type: 'text', text },
+            ...imageUrls.map((url) => ({
+              type: 'image_url' as const,
+              image_url: { url },
+            })),
+          ],
           name: msg.authorId.replaceAll(/[^a-zA-Z0-9_-]/g, '_'),
         });
       }
@@ -70,7 +91,8 @@ export class Agent {
 
       const completion = await this.openai.chat.completions.create({
         model: this.chatModel,
-        messages: this.messages,
+        // deno-lint-ignore no-explicit-any
+        messages: this.messages as any,
         temperature: 0.5,
         top_p: 0.5,
       });
