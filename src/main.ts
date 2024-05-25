@@ -47,6 +47,10 @@ client.on(Events.InteractionCreate, async (interaction) => {
 });
 
 client.on(Events.MessageCreate, async (msg) => {
+  if (env.CHANNEL_WHITELIST && !env.CHANNEL_WHITELIST.includes(msg.channelId)) {
+    return;
+  }
+
   const botUser = client.user;
   if (!botUser) {
     return;
