@@ -90,6 +90,7 @@ client.on(Events.MessageCreate, async (msg) => {
     user.id === botUser.id
   );
   if (botMentioned) {
+    msg.channel.sendTyping();
     const messages = chatBuffer.flush(channelId);
     const respond = await agentManager.chat(channelId, messages);
     if (respond) {
