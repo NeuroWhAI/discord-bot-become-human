@@ -1,10 +1,19 @@
 import { load as loadEnv } from 'std/dotenv/mod.ts';
 const env = await loadEnv();
 
-import type { Interaction } from 'discord.js';
 import { Client, Collection, Events, GatewayIntentBits } from 'discord.js';
+import { ChatBuffer } from './chat/chat-buffer.ts';
+import { ChatMessage } from './chat/chat-message.ts';
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+const chatBuffer = new ChatBuffer();
+
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+  ],
+});
 
 client.commands = new Collection();
 
@@ -28,13 +37,39 @@ client.once(Events.ClientReady, (c) => {
   console.log(`Logged in as ${c.user.tag}`);
 });
 
-client.on(Events.InteractionCreate, async (interaction: Interaction) => {
+client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
   const command = interaction.client.commands.get(interaction.commandName);
   if (!command) return;
 
   await command.execute(interaction);
+});
+
+client.on(Events.MessageCreate, async (msg) => {
+  const botUser = client.user;
+  if (!botUser) {
+    return;
+  }
+
+  if (msg.author.id === botUser.id) return;
+
+  chatBuffer.append(
+    msg.channelId,
+    new ChatMessage({
+      author: msg.author.tag,
+      content: msg.content,
+      date: msg.createdAt,
+    }),
+  );
+
+  const botMentioned = msg.mentions.users.some((user) =>
+    user.id === botUser.id
+  );
+  if (botMentioned) {
+    const messages = chatBuffer.flush(msg.channelId);
+    await msg.reply({ content: 'Hello! ' + messages.length + ' messages.' });
+  }
 });
 
 client.login(env.DISCORD_TOKEN);
