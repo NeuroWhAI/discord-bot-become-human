@@ -17,4 +17,6 @@ export class ChatMessage {
   public author: string;
   public content: string;
   public date: Date;
+
+  public refMessage: ChatMessage | null = null;
 }

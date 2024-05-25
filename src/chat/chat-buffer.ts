@@ -24,6 +24,11 @@ export class ChatBuffer {
         } else {
           latestMsg.content = message.content;
         }
+
+        if (message.refMessage) {
+          latestMsg.refMessage = message.refMessage;
+        }
+
         return;
       }
 
@@ -34,7 +39,7 @@ export class ChatBuffer {
       }
     }
 
-    buffer.push(new ChatMessage(message));
+    buffer.push(message);
 
     // 메모리 부족 방지로 단순 개수 제한.
     // 이게 컨텍스트 제한이 되는 건 아님.

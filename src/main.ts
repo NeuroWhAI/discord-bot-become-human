@@ -66,14 +66,34 @@ client.on(Events.MessageCreate, async (msg) => {
     `${msg.author.tag} — ${msg.createdAt.toLocaleTimeString()}\n${msg.cleanContent}`,
   );
 
+  const chatMsg = new ChatMessage({
+    authorId: msg.author.tag,
+    author: msg.member ? msg.member.displayName : msg.author.displayName,
+    content: msg.cleanContent,
+    date: msg.createdAt,
+  });
+
+  if (msg.reference) {
+    const refMessages = await msg.channel.messages.fetch({
+      around: msg.reference.messageId,
+      limit: 1,
+    });
+    const refMsg = refMessages.first();
+    if (refMsg) {
+      chatMsg.refMessage = new ChatMessage({
+        authorId: refMsg.author.tag,
+        author: refMsg.member
+          ? refMsg.member.displayName
+          : refMsg.author.displayName,
+        content: refMsg.cleanContent,
+        date: refMsg.createdAt,
+      });
+    }
+  }
+
   chatBuffer.append(
     channelId,
-    new ChatMessage({
-      authorId: msg.author.tag,
-      author: msg.member ? msg.member.displayName : msg.author.displayName,
-      content: msg.cleanContent,
-      date: msg.createdAt,
-    }),
+    chatMsg,
   );
 
   if (msg.author.bot) {

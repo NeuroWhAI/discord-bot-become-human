@@ -47,12 +47,15 @@ export class Agent {
     try {
       // 새 대화 이력 추가.
       for (const msg of newMessages) {
-        const dateStr = msg.date.toLocaleString(undefined, {
-          hour: 'numeric',
-          minute: 'numeric',
-          hour12: true,
-        });
-        const content = `${msg.author} — ${dateStr}\n${msg.content}`;
+        let content = `${msg.author} — ${localeDate(msg.date)}\n${msg.content}`;
+
+        if (msg.refMessage) {
+          const refMsg = msg.refMessage;
+          content =
+            `${refMsg.author} — past\n${refMsg.content}\n--- Referred to by the following message ---\n` +
+            content;
+        }
+
         this.messages.push({
           role: 'user',
           content,
@@ -95,4 +98,12 @@ export class Agent {
       this.typing = false;
     }
   }
+}
+
+function localeDate(date: Date) {
+  return date.toLocaleString(undefined, {
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: true,
+  });
 }
