@@ -71,6 +71,9 @@ client.on(Events.MessageCreate, async (msg) => {
     author: msg.member ? msg.member.displayName : msg.author.displayName,
     content: msg.cleanContent,
     date: msg.createdAt,
+    imageUrls: msg.attachments.map((attachment) => attachment.url).filter((
+      url,
+    ) => /\.(png|jpeg|jpg|webp)$/g.test(new URL(url).pathname)),
   });
 
   if (msg.reference) {
@@ -87,6 +90,10 @@ client.on(Events.MessageCreate, async (msg) => {
           : refMsg.author.displayName,
         content: refMsg.cleanContent,
         date: refMsg.createdAt,
+        imageUrls: refMsg.attachments.map((attachment) => attachment.url)
+          .filter((
+            url,
+          ) => /\.(png|jpeg|jpg|webp)$/g.test(new URL(url).pathname)),
       });
     }
   }

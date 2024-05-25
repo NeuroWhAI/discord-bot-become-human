@@ -25,6 +25,10 @@ export class ChatBuffer {
           latestMsg.content = message.content;
         }
 
+        if (message.imageUrls.length > 0) {
+          latestMsg.imageUrls = [...latestMsg.imageUrls, ...message.imageUrls];
+        }
+
         if (message.refMessage) {
           latestMsg.refMessage = message.refMessage;
         }
