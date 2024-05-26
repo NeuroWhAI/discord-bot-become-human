@@ -37,8 +37,9 @@ export class Agent {
   private readonly chatPrompt: string;
   private readonly summarizePrompt: string;
 
-  private textHistory: string = '';
+  private summaryTarget: string = '';
   private messages: AgentMessage[] = [];
+  private prevSummaryIndex: number = -1;
   private typing: boolean = false;
 
   private _running: boolean = false;
@@ -50,11 +51,12 @@ export class Agent {
   }
 
   private reset() {
-    this.textHistory = '';
+    this.summaryTarget = '';
     this.messages = [{
       role: 'system',
       content: this.chatPrompt,
     }];
+    this.prevSummaryIndex = -1;
     this.running = false;
     this.typing = false;
   }
@@ -76,14 +78,14 @@ export class Agent {
           imageUrls = msg.imageUrls;
         }
 
-        if (this.textHistory) {
-          this.textHistory += `\n\n${text}`;
+        if (this.summaryTarget) {
+          this.summaryTarget += `\n\n${text}`;
         } else {
-          this.textHistory = text;
+          this.summaryTarget = text;
         }
 
         if (imageUrls.length > 0) {
-          this.textHistory += '\n(attached images)';
+          this.summaryTarget += '\n(attached images)';
         }
 
         this.messages.push({
@@ -132,7 +134,7 @@ export class Agent {
           resContent = resContent.substring(0, resContent.length - 7);
         }
 
-        this.textHistory += `\n\nassistant — ${
+        this.summaryTarget += `\n\nassistant — ${
           localeDate(new Date())
         }\n${resContent}`;
 
@@ -145,21 +147,27 @@ export class Agent {
       if (cmd === 'STOP' || cmd === 'SWITCH') {
         console.log(cmd);
 
-        const summary = await this.summarize(this.textHistory);
-        console.log(summary);
-
-        this.reset();
-        if (cmd === 'SWITCH') {
-          this.running = true;
+        if (cmd === 'STOP') {
+          this.running = false;
         }
 
+        const summary = await this.summarize(this.summaryTarget);
         const summaryContent =
           '--- Below is a summary of previous conversation ---\n\n' +
           summary +
           '\n\n--- This is end of the summary. ---';
+        console.log(summaryContent);
 
-        this.textHistory = summaryContent;
+        this.summaryTarget = summaryContent;
 
+        if (this.prevSummaryIndex >= 0) {
+          this.messages = [
+            this.messages[0], // System message.
+            ...this.messages.slice(this.prevSummaryIndex),
+          ];
+        }
+
+        this.prevSummaryIndex = this.messages.length;
         this.messages.push({
           role: 'user',
           content: summaryContent,
@@ -168,6 +176,8 @@ export class Agent {
       } else if (cmd !== 'IDLE') {
         this.running = true;
       }
+
+      console.log(`context cnt: ${this.messages.length}`);
 
       return resContent;
     } finally {
