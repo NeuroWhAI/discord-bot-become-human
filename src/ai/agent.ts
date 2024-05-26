@@ -114,7 +114,10 @@ export class Agent {
       const res = completion.choices[0].message;
       let resContent = res.content?.trim() ?? '';
 
-      if (resContent.endsWith('STOP') || resContent !== 'IDLE') {
+      if (
+        resContent.endsWith('STOP') || resContent.endsWith('SWITCH') ||
+        resContent !== 'IDLE'
+      ) {
         this.textHistory += `\n\nassistant — ${
           localeDate(new Date())
         }\n${resContent}`;
@@ -133,7 +136,9 @@ export class Agent {
 
         const summary = await this.summarize(this.textHistory);
         console.log(summary);
+
         this.reset();
+
         this.messages.push({
           role: 'user',
           content: '--- Below is a summary of previous conversation ---\n\n' +
@@ -143,6 +148,24 @@ export class Agent {
         });
 
         resContent = resContent.substring(0, resContent.length - 4);
+      } else if (resContent.endsWith('SWITCH')) {
+        console.log('SWITCH');
+
+        const summary = await this.summarize(this.textHistory);
+        console.log(summary);
+
+        this.reset();
+        this.running = true;
+
+        this.messages.push({
+          role: 'user',
+          content: '--- Below is a summary of previous conversation ---\n\n' +
+            summary +
+            '\n\n--- This is end of the summary. ---',
+          name: 'summarizer',
+        });
+
+        resContent = resContent.substring(0, resContent.length - 6);
       } else {
         this.running = true;
       }
