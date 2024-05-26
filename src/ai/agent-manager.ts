@@ -38,4 +38,10 @@ export class AgentManager {
     if (!agent) return false;
     return agent.running;
   }
+
+  public setRunning(channelId: string, running: boolean) {
+    const agent = this.agents.get(channelId);
+    if (!agent) return;
+    agent.running = running;
+  }
 }

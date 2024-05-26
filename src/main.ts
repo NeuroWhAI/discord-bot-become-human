@@ -5,10 +5,13 @@ import { Client, Collection, Events, GatewayIntentBits } from 'discord.js';
 import { ChatBuffer } from './chat/chat-buffer.ts';
 import { ChatMessage } from './chat/chat-message.ts';
 import { AgentManager } from './ai/agent-manager.ts';
+import { TextBasedChannel } from 'discord.js';
+import { Message } from 'discord.js';
 
 const chatBuffer = new ChatBuffer();
 const agentManager = new AgentManager();
 const chatTriggers = new Map<string, number>();
+const chatTimeouts = new Map<string, number>();
 
 const client = new Client({
   intents: [
@@ -66,15 +69,7 @@ client.on(Events.MessageCreate, async (msg) => {
     `${msg.author.tag} — ${msg.createdAt.toLocaleTimeString()}\n${msg.cleanContent}`,
   );
 
-  const chatMsg = new ChatMessage({
-    authorId: msg.author.tag,
-    author: msg.member ? msg.member.displayName : msg.author.displayName,
-    content: msg.cleanContent,
-    date: msg.createdAt,
-    imageUrls: msg.attachments.map((attachment) => attachment.url).filter((
-      url,
-    ) => /\.(png|jpeg|jpg|webp)$/g.test(new URL(url).pathname)),
-  });
+  const chatMsg = makeChatMessageFrom(msg);
 
   if (msg.reference) {
     const refMessages = await msg.channel.messages.fetch({
@@ -83,18 +78,7 @@ client.on(Events.MessageCreate, async (msg) => {
     });
     const refMsg = refMessages.first();
     if (refMsg) {
-      chatMsg.refMessage = new ChatMessage({
-        authorId: refMsg.author.tag,
-        author: refMsg.member
-          ? refMsg.member.displayName
-          : refMsg.author.displayName,
-        content: refMsg.cleanContent,
-        date: refMsg.createdAt,
-        imageUrls: refMsg.attachments.map((attachment) => attachment.url)
-          .filter((
-            url,
-          ) => /\.(png|jpeg|jpg|webp)$/g.test(new URL(url).pathname)),
-      });
+      chatMsg.refMessage = makeChatMessageFrom(refMsg);
     }
   }
 
@@ -113,20 +97,18 @@ client.on(Events.MessageCreate, async (msg) => {
     chatTriggers.delete(channelId);
   }
 
+  const timeoutId = chatTimeouts.get(channelId);
+  if (timeoutId != null) {
+    clearTimeout(timeoutId);
+    chatTimeouts.delete(channelId);
+  }
+
   const botMentioned = msg.mentions.users.some((user) =>
     user.id === botUser.id
   );
   if (botMentioned) {
     msg.channel.sendTyping();
-
-    const messages = chatBuffer.flush(channelId);
-    const respond = await agentManager.chat(channelId, messages);
-    if (respond) {
-      console.log(
-        `${botUser.tag}\n${respond}`,
-      );
-      await msg.channel.send({ content: respond });
-    }
+    await chat(msg.channel);
   } else {
     const agentRunning = agentManager.checkRunning(channelId);
     const triggerTime = agentRunning
@@ -134,19 +116,43 @@ client.on(Events.MessageCreate, async (msg) => {
       : 5 * 60 * 1000 + Math.floor(2 * 3600 * 1000 * Math.random());
 
     triggerId = setTimeout(async () => {
+      console.log('triggered');
       chatTriggers.delete(channelId);
-
-      const messages = chatBuffer.flush(channelId);
-      const respond = await agentManager.chat(channelId, messages);
-      if (respond) {
-        console.log(
-          `${botUser.tag}\n${respond}`,
-        );
-        await msg.channel.send({ content: respond });
-      }
+      await chat(msg.channel);
     }, triggerTime);
     chatTriggers.set(channelId, triggerId);
   }
 });
+
+function makeChatMessageFrom(msg: Message): ChatMessage {
+  return new ChatMessage({
+    authorId: msg.author.tag,
+    author: msg.member ? msg.member.displayName : msg.author.displayName,
+    content: msg.cleanContent,
+    date: msg.createdAt,
+    imageUrls: msg.attachments.map((attachment) => attachment.url).filter((
+      url,
+    ) => /\.(png|jpeg|jpg|webp)$/g.test(new URL(url).pathname)),
+  });
+}
+
+async function chat(channel: TextBasedChannel) {
+  const channelId = channel.id;
+  const messages = chatBuffer.flush(channelId);
+  const respond = await agentManager.chat(channelId, messages);
+  if (respond) {
+    console.log(
+      `assistant\n${respond}`,
+    );
+    await channel.send({ content: respond });
+
+    const timeoutId = setTimeout(() => {
+      console.log('timeout');
+      chatTimeouts.delete(channelId);
+      agentManager.setRunning(channelId, false);
+    }, 5 * 60 * 1000);
+    chatTimeouts.set(channelId, timeoutId);
+  }
+}
 
 client.login(env.DISCORD_TOKEN);

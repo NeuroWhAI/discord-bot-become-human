@@ -46,7 +46,7 @@ export class Agent {
   public get running(): boolean {
     return this._running;
   }
-  private set running(v: boolean) {
+  public set running(v: boolean) {
     this._running = v;
   }
 
