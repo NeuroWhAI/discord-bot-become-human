@@ -139,7 +139,7 @@ client.on(Events.MessageCreate, async (msg) => {
     const agentRunning = agentManager.checkRunning(channelId);
     const triggerTime = agentRunning
       ? 8 * 1000 + Math.floor(4 * 1000 * Math.random())
-      : 60 * 1000 + Math.floor(3600 * 1000 * Math.random());
+      : 60 * 1000 + Math.floor(30 * 60 * 1000 * Math.random());
 
     triggerId = setTimeout(async () => {
       chatTriggers.delete(channelId);
