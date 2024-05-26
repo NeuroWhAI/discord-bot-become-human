@@ -40,7 +40,7 @@ for (const file of Deno.readDirSync('src/commands')) {
 }
 
 client.once(Events.ClientReady, (c) => {
-  console.log(`Logged in as ${c.user.tag}`);
+  console.log(`# Logged in as ${c.user.tag}`);
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
@@ -66,7 +66,7 @@ client.on(Events.MessageCreate, async (msg) => {
   if (msg.author.id === botUser.id) return;
 
   console.log(
-    `${msg.author.tag} — ${msg.createdAt.toLocaleTimeString()}\n${msg.cleanContent}`,
+    `[${msg.author.tag} — ${msg.createdAt.toLocaleTimeString()}]\n${msg.cleanContent}`,
   );
 
   const chatMsg = makeChatMessageFrom(msg);
@@ -116,7 +116,9 @@ client.on(Events.MessageCreate, async (msg) => {
       : 5 * 60 * 1000 + Math.floor(2 * 3600 * 1000 * Math.random());
 
     triggerId = setTimeout(async () => {
-      console.log('triggered');
+      console.log(
+        `# Triggered after ${Math.round(triggerTime / 1000 / 60)}m`,
+      );
       chatTriggers.delete(channelId);
       await chat(msg.channel);
     }, triggerTime);
@@ -142,12 +144,12 @@ async function chat(channel: TextBasedChannel) {
   const respond = await agentManager.chat(channelId, messages);
   if (respond) {
     console.log(
-      `assistant\n${respond}`,
+      `[assistant]\n${respond}`,
     );
     await channel.send({ content: respond });
 
     const timeoutId = setTimeout(() => {
-      console.log('timeout');
+      console.log('# Timeout');
       chatTimeouts.delete(channelId);
       agentManager.setRunning(channelId, false);
     }, 5 * 60 * 1000);

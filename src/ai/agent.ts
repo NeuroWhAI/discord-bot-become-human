@@ -145,7 +145,7 @@ export class Agent {
       }
 
       if (cmd === 'STOP' || cmd === 'SWITCH') {
-        console.log(cmd);
+        console.log('# ' + cmd);
 
         if (cmd === 'STOP') {
           this.running = false;
@@ -177,7 +177,7 @@ export class Agent {
         this.running = true;
       }
 
-      console.log(`context cnt: ${this.messages.length}`);
+      console.log(`# Context cnt: ${this.messages.length}`);
 
       return resContent;
     } finally {
