@@ -22,18 +22,22 @@ export class Agent {
   constructor(
     openai: OpenAI,
     chatModel: string,
-    prompt: string,
+    chatPrompt: string,
+    summarizePrompt: string,
   ) {
     this.openai = openai;
     this.chatModel = chatModel;
-    this.prompt = prompt;
+    this.chatPrompt = chatPrompt;
+    this.summarizePrompt = summarizePrompt;
     this.reset();
   }
 
   private readonly openai: OpenAI;
   private readonly chatModel: string;
-  private readonly prompt: string;
+  private readonly chatPrompt: string;
+  private readonly summarizePrompt: string;
 
+  private textHistory: string = '';
   private messages: AgentMessage[] = [];
   private typing: boolean = false;
 
@@ -46,9 +50,10 @@ export class Agent {
   }
 
   private reset() {
+    this.textHistory = '';
     this.messages = [{
       role: 'system',
-      content: this.prompt,
+      content: this.chatPrompt,
     }];
     this.running = false;
     this.typing = false;
@@ -69,6 +74,16 @@ export class Agent {
           imageUrls = [...refMsg.imageUrls, ...msg.imageUrls];
         } else {
           imageUrls = msg.imageUrls;
+        }
+
+        if (this.textHistory) {
+          this.textHistory += `\n\n${text}`;
+        } else {
+          this.textHistory = text;
+        }
+
+        if (imageUrls.length > 0) {
+          this.textHistory += '\n(attached images)';
         }
 
         this.messages.push({
@@ -99,26 +114,65 @@ export class Agent {
       const res = completion.choices[0].message;
       let resContent = res.content?.trim() ?? '';
 
+      if (resContent.endsWith('STOP') || resContent !== 'IDLE') {
+        this.textHistory += `\n\nassistant — ${
+          localeDate(new Date())
+        }\n${resContent}`;
+
+        this.messages.push({
+          role: res.role,
+          content: resContent,
+        });
+      }
+
       if (resContent === 'IDLE') {
         console.log('IDLE');
-        return '';
+        resContent = '';
       } else if (resContent.endsWith('STOP')) {
         console.log('STOP');
+
+        const summary = await this.summarize(this.textHistory);
+        console.log(summary);
         this.reset();
+        this.messages.push({
+          role: 'user',
+          content: '--- Below is a summary of previous conversation ---\n\n' +
+            summary +
+            '\n\n--- This is end of the summary. ---',
+          name: 'summarizer',
+        });
+
         resContent = resContent.substring(0, resContent.length - 4);
       } else {
         this.running = true;
       }
 
-      this.messages.push({
-        role: res.role,
-        content: resContent,
-      });
-
       return resContent;
     } finally {
       this.typing = false;
     }
+  }
+
+  private async summarize(content: string): Promise<string> {
+    const completion = await this.openai.chat.completions.create({
+      model: this.chatModel,
+      messages: [
+        {
+          role: 'system',
+          content: this.summarizePrompt,
+        },
+        {
+          role: 'user',
+          content,
+        },
+      ],
+      temperature: 0.5,
+      top_p: 0.5,
+    });
+    const res = completion.choices[0].message;
+    const resContent = res.content?.trim() ?? '';
+
+    return resContent.trim();
   }
 }
 

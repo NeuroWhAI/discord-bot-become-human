@@ -16,8 +16,16 @@ export class AgentManager {
   ): Promise<string> {
     let agent = this.agents.get(channelId);
     if (!agent) {
-      const systemPrompt = await Deno.readTextFile('prompt/chat-en.txt');
-      agent = new Agent(openai, env.OPENAI_CHAT_MODEL, systemPrompt.trim());
+      const chatPrompt = await Deno.readTextFile('prompt/chat-en.txt');
+      const summarizePrompt = await Deno.readTextFile(
+        'prompt/summarize-en.txt',
+      );
+      agent = new Agent(
+        openai,
+        env.OPENAI_CHAT_MODEL,
+        chatPrompt.trim(),
+        summarizePrompt.trim(),
+      );
       this.agents.set(channelId, agent);
     }
 
