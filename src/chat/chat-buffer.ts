@@ -35,19 +35,13 @@ export class ChatBuffer {
 
         return;
       }
-
-      // 이전 대화가 오래된 경우 새로 누적.
-      if (elapsedTime > 12 * 24 * 3600 * 1000) {
-        buffer = [];
-        this.bufferTable.set(channelId, buffer);
-      }
     }
 
     buffer.push(message);
 
     // 메모리 부족 방지로 단순 개수 제한.
     // 이게 컨텍스트 제한이 되는 건 아님.
-    if (buffer.length > 1000) {
+    if (buffer.length > 100) {
       buffer.splice(0, buffer.length - 1000);
     }
   }
