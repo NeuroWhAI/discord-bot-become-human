@@ -114,10 +114,24 @@ export class Agent {
       const res = completion.choices[0].message;
       let resContent = res.content?.trim() ?? '';
 
-      if (
-        resContent.endsWith('STOP') || resContent.endsWith('SWITCH') ||
-        resContent !== 'IDLE'
-      ) {
+      let cmd: '' | 'IDLE' | 'STOP' | 'SWITCH' = '';
+      if (resContent === 'IDLE') {
+        cmd = 'IDLE';
+      } else if (resContent.endsWith('STOP')) {
+        cmd = 'STOP';
+      } else if (resContent.endsWith('SWITCH')) {
+        cmd = 'SWITCH';
+      }
+
+      if (cmd === 'IDLE') {
+        resContent = '';
+      } else {
+        if (cmd === 'STOP') {
+          resContent = resContent.substring(0, resContent.length - 4);
+        } else if (cmd === 'SWITCH') {
+          resContent = resContent.substring(0, resContent.length - 7);
+        }
+
         this.textHistory += `\n\nassistant — ${
           localeDate(new Date())
         }\n${resContent}`;
@@ -128,45 +142,30 @@ export class Agent {
         });
       }
 
-      if (resContent === 'IDLE') {
-        console.log('IDLE');
-        resContent = '';
-      } else if (resContent.endsWith('STOP')) {
-        console.log('STOP');
+      if (cmd === 'STOP' || cmd === 'SWITCH') {
+        console.log(cmd);
 
         const summary = await this.summarize(this.textHistory);
         console.log(summary);
 
         this.reset();
+        if (cmd === 'SWITCH') {
+          this.running = true;
+        }
+
+        const summaryContent =
+          '--- Below is a summary of previous conversation ---\n\n' +
+          summary +
+          '\n\n--- This is end of the summary. ---';
+
+        this.textHistory = summaryContent;
 
         this.messages.push({
           role: 'user',
-          content: '--- Below is a summary of previous conversation ---\n\n' +
-            summary +
-            '\n\n--- This is end of the summary. ---',
+          content: summaryContent,
           name: 'summarizer',
         });
-
-        resContent = resContent.substring(0, resContent.length - 4);
-      } else if (resContent.endsWith('SWITCH')) {
-        console.log('SWITCH');
-
-        const summary = await this.summarize(this.textHistory);
-        console.log(summary);
-
-        this.reset();
-        this.running = true;
-
-        this.messages.push({
-          role: 'user',
-          content: '--- Below is a summary of previous conversation ---\n\n' +
-            summary +
-            '\n\n--- This is end of the summary. ---',
-          name: 'summarizer',
-        });
-
-        resContent = resContent.substring(0, resContent.length - 6);
-      } else {
+      } else if (cmd !== 'IDLE') {
         this.running = true;
       }
 
