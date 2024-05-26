@@ -4,7 +4,8 @@
 
 OpenAI 대화 모델을 적절히 사용하여 디스코드 채널에서 자연스럽게 사람들의 대화에 참여하는 봇.
 
-![demo](assets/demo.png)
+![demo](assets/demo.png)  
+![demo2](assets/demo2.png)
 
 ## Features
 
