@@ -38,6 +38,7 @@ for (const file of Deno.readDirSync('src/commands')) {
 
 client.once(Events.ClientReady, (c) => {
   console.log(`Logged in as ${c.user.tag}`);
+  c.user.setPresence({ status: 'idle' });
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
@@ -117,7 +118,11 @@ client.on(Events.MessageCreate, async (msg) => {
     user.id === botUser.id
   );
   if (botMentioned) {
+    if (botUser.presence.status !== 'online') {
+      botUser.setPresence({ status: 'online' });
+    }
     msg.channel.sendTyping();
+
     const messages = chatBuffer.flush(channelId);
     const respond = await agentManager.chat(channelId, messages);
     if (respond) {
@@ -125,6 +130,10 @@ client.on(Events.MessageCreate, async (msg) => {
         `${botUser.tag}\n${respond}`,
       );
       await msg.channel.send({ content: respond });
+    }
+
+    if (!agentManager.checkRunning(channelId)) {
+      botUser.setPresence({ status: 'idle' });
     }
   } else {
     const agentRunning = agentManager.checkRunning(channelId);
@@ -135,6 +144,11 @@ client.on(Events.MessageCreate, async (msg) => {
     triggerId = setTimeout(async () => {
       chatTriggers.delete(channelId);
 
+      if (botUser.presence.status !== 'online') {
+        botUser.setPresence({ status: 'online' });
+      }
+      msg.channel.sendTyping();
+
       const messages = chatBuffer.flush(channelId);
       const respond = await agentManager.chat(channelId, messages);
       if (respond) {
@@ -142,6 +156,10 @@ client.on(Events.MessageCreate, async (msg) => {
           `${botUser.tag}\n${respond}`,
         );
         await msg.channel.send({ content: respond });
+      }
+
+      if (!agentManager.checkRunning(channelId)) {
+        botUser.setPresence({ status: 'idle' });
       }
     }, triggerTime);
     chatTriggers.set(channelId, triggerId);
