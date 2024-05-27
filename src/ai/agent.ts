@@ -148,10 +148,17 @@ export class Agent {
 
           console.log(`# Calling tool: ${functionName}(${functionArg})`);
 
-          const tool = getTool(functionName);
-          const toolRes = tool
-            ? await tool.execute(functionArg)
-            : `The ${functionName} tool not found!`;
+          let toolRes: string;
+          try {
+            const tool = getTool(functionName);
+            toolRes = tool
+              ? await tool.execute(functionArg)
+              : `The ${functionName} tool not found!`;
+          } catch (err) {
+            toolRes = `The ${functionName} tool failed to execute!\n${
+              (err as Error).message
+            }`;
+          }
 
           console.log(`# Tool response:\n${toolRes}`);
 
