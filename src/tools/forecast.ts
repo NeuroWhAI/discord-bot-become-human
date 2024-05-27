@@ -40,7 +40,7 @@ export async function execute(arg: string): Promise<string> {
 
     return `City: ${weatherRes.city_name}\nToday: ${getCurrentDate()}\n\n` +
       weatherRes.data.map((day) =>
-        `Date: ${day.valid_date}
+        `[${day.valid_date}]
 Weather: ${day.weather.description}
 Average Temperature: ${day.temp}
 Minimum Temperature: ${day.min_temp}
