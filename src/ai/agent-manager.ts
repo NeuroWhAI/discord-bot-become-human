@@ -4,11 +4,20 @@ const env = await loadEnv();
 import OpenAI from 'openai';
 import { ChatMessage } from '../chat/chat-message.ts';
 import { Agent } from './agent.ts';
+import { ChatCompletionTool, getAllTools } from './tool.ts';
 
 const openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
 
 export class AgentManager {
+  constructor() {
+    this.tools = getAllTools().map((tool) => ({
+      type: 'function',
+      function: tool.metadata,
+    }));
+  }
+
   private readonly agents: Map<string, Agent> = new Map();
+  private readonly tools: ChatCompletionTool[];
 
   public async chat(
     channelId: string,
@@ -25,6 +34,7 @@ export class AgentManager {
         env.OPENAI_CHAT_MODEL,
         chatPrompt.trim(),
         summarizePrompt.trim(),
+        this.tools,
       );
       this.agents.set(channelId, agent);
     }

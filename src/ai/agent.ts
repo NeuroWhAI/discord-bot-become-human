@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import { ChatMessage } from '../chat/chat-message.ts';
+import { ChatCompletionTool, getTool } from './tool.ts';
 
 interface ChatCompletionContentPartText {
   text: string;
@@ -12,10 +13,21 @@ interface ChatCompletionContentPartImage {
 type ChatCompletionContentPart =
   | ChatCompletionContentPartText
   | ChatCompletionContentPartImage;
+interface ChatCompletionMessageToolCallFunction {
+  arguments: string;
+  name: string;
+}
+interface ChatCompletionMessageToolCall {
+  id: string;
+  function: ChatCompletionMessageToolCallFunction;
+  type: 'function';
+}
 interface AgentMessage {
-  role: 'system' | 'assistant' | 'user';
+  role: 'system' | 'assistant' | 'user' | 'tool';
   content: string | ChatCompletionContentPart[];
   name?: string;
+  tool_call_id?: string;
+  tool_calls?: ChatCompletionMessageToolCall[];
 }
 
 export class Agent {
@@ -24,11 +36,13 @@ export class Agent {
     chatModel: string,
     chatPrompt: string,
     summarizePrompt: string,
+    tools: ChatCompletionTool[],
   ) {
     this.openai = openai;
     this.chatModel = chatModel;
     this.chatPrompt = chatPrompt;
     this.summarizePrompt = summarizePrompt;
+    this.tools = tools;
     this.reset();
   }
 
@@ -36,6 +50,7 @@ export class Agent {
   private readonly chatModel: string;
   private readonly chatPrompt: string;
   private readonly summarizePrompt: string;
+  private readonly tools: ChatCompletionTool[];
 
   private summaryTarget: string = '';
   private messages: AgentMessage[] = [];
@@ -112,9 +127,52 @@ export class Agent {
         messages: this.messages as any,
         temperature: 0.5,
         top_p: 0.5,
+        // deno-lint-ignore no-explicit-any
+        tools: this.tools as any,
+        tool_choice: 'auto',
       });
       const res = completion.choices[0].message;
       let resContent = res.content?.trim() ?? '';
+
+      const toolCalls = res.tool_calls;
+      if (toolCalls) {
+        this.messages.push({
+          role: res.role,
+          content: res.content ?? '',
+          tool_calls: res.tool_calls,
+        });
+
+        for (const toolCall of toolCalls) {
+          const functionName = toolCall.function.name;
+          const functionArg = toolCall.function.arguments;
+
+          console.log(`# Calling tool: ${functionName}(${functionArg})`);
+
+          const tool = getTool(functionName);
+          const toolRes = tool
+            ? await tool.execute(functionArg)
+            : `The ${functionName} tool not found!`;
+
+          console.log(`# Tool response:\n${toolRes}`);
+
+          this.messages.push({
+            tool_call_id: toolCall.id,
+            role: 'tool',
+            name: functionName,
+            content: toolRes,
+          });
+        }
+
+        const completion2 = await this.openai.chat.completions.create({
+          model: this.chatModel,
+          // deno-lint-ignore no-explicit-any
+          messages: this.messages as any,
+          temperature: 0.5,
+          top_p: 0.5,
+        });
+        const res2 = completion2.choices[0].message;
+        resContent = res2.content?.trim() ?? '';
+      }
 
       let cmd: '' | 'IDLE' | 'STOP' | 'SWITCH' = '';
       if (resContent === 'IDLE') {
