@@ -37,6 +37,8 @@ export class AgentManager {
         this.tools,
       );
       this.agents.set(channelId, agent);
+
+      console.log(`# Create new ${env.OPENAI_CHAT_MODEL} agent`);
     }
 
     const res = await agent.chat(newMessages);

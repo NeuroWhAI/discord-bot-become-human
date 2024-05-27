@@ -77,6 +77,10 @@ export class Agent {
   }
 
   public async chat(newMessages: ChatMessage[]): Promise<string> {
+    const backupSummaryTarget = this.summaryTarget;
+    const backupMessages = [...this.messages];
+    const backupPrevSummaryIndex = this.prevSummaryIndex;
+
     // 새 대화 이력 추가.
     for (const msg of newMessages) {
       let text = `${msg.author} — ${localeDate(msg.date)}\n${msg.content}`;
@@ -190,6 +194,10 @@ export class Agent {
         cmd = 'SWITCH';
       }
 
+      if (cmd) {
+        console.log(`# ${cmd}`);
+      }
+
       if (cmd === 'IDLE') {
         resContent = '';
       } else {
@@ -210,8 +218,6 @@ export class Agent {
       }
 
       if (cmd === 'STOP' || cmd === 'SWITCH') {
-        console.log('# ' + cmd);
-
         this.running = cmd === 'SWITCH';
 
         const summary = await this.summarize(this.summaryTarget);
@@ -243,31 +249,52 @@ export class Agent {
       console.log(`# Context cnt: ${this.messages.length}`);
 
       return resContent;
+    } catch (err) {
+      this.summaryTarget = backupSummaryTarget;
+      this.messages = backupMessages;
+      this.prevSummaryIndex = backupPrevSummaryIndex;
+
+      const errMessage = `Failed to generate response.\n${
+        (err as Error).message
+      }`;
+      this.summaryTarget += `\n\nassistant — ${
+        localeDate(new Date())
+      }\n${errMessage}`;
+
+      this.messages.push({
+        role: 'assistant',
+        content: errMessage,
+      });
+      return errMessage;
     } finally {
       this.typing = false;
     }
   }
 
   private async summarize(content: string): Promise<string> {
-    const completion = await this.openai.chat.completions.create({
-      model: this.chatModel,
-      messages: [
-        {
-          role: 'system',
-          content: this.summarizePrompt,
-        },
-        {
-          role: 'user',
-          content,
-        },
-      ],
-      temperature: 0.5,
-      top_p: 0.5,
-    });
-    const res = completion.choices[0].message;
-    const resContent = res.content?.trim() ?? '';
+    try {
+      const completion = await this.openai.chat.completions.create({
+        model: this.chatModel,
+        messages: [
+          {
+            role: 'system',
+            content: this.summarizePrompt,
+          },
+          {
+            role: 'user',
+            content,
+          },
+        ],
+        temperature: 0.5,
+        top_p: 0.5,
+      });
+      const res = completion.choices[0].message;
+      const resContent = res.content?.trim() ?? '';
 
-    return resContent.trim();
+      return resContent.trim();
+    } catch (err) {
+      return `Failed to summarize.\n${(err as Error).message}`;
+    }
   }
 }
 
