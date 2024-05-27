@@ -55,6 +55,30 @@ Probability of Precipitation: ${day.pop}%`.trim()
   }
 }
 
+export async function getTodaysForecast(city: string): Promise<string> {
+  try {
+    const apiKey = env.WEATHER_BIT_API_KEY;
+    const url =
+      `https://api.weatherbit.io/v2.0/forecast/daily?key=${apiKey}&city=${city}`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      return `HTTP error! Status: ${res.status}`;
+    }
+    const weatherRes: WeatherApiResponse = await res.json();
+    if (!weatherRes.data?.length) {
+      return 'No weather data found';
+    }
+
+    const day = weatherRes.data[0];
+
+    return `Average Temperature: ${day.temp}
+Minimum Temperature: ${day.min_temp}
+Maximum Temperature: ${day.max_temp}`.trim();
+  } catch (err) {
+    return `Failed to fetch weather data: ${(err as Error).message}`;
+  }
+}
+
 function getCurrentDate() {
   const today = new Date();
   const year = today.getFullYear();

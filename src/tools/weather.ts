@@ -6,6 +6,7 @@ import { load as loadEnv } from 'std/dotenv/mod.ts';
 const env = await loadEnv();
 
 import { FunctionDefinition } from '../ai/tool.ts';
+import { getTodaysForecast } from './forecast.ts';
 
 export const metadata: FunctionDefinition = {
   name: 'get_current_weather',
@@ -35,10 +36,14 @@ export async function execute(arg: string): Promise<string> {
     }
     const weatherRes: WeatherApiResponse = await res.json();
     const data = weatherRes.data[0];
+
+    const forecast = await getTodaysForecast(city);
+
     return `City: ${data.city_name}
 Weather: ${data.weather.description}
 Temperature: ${data.temp}
 Feels Like: ${data.app_temp}
+${forecast}
 Humidity: ${data.rh}%
 Wind: ${data.wind_spd} m/s
 Visibility: ${data.vis} km`.trim();
