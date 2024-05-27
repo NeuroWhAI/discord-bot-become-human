@@ -36,12 +36,12 @@ export async function execute(arg: string): Promise<string> {
     const weatherRes: WeatherApiResponse = await res.json();
     const data = weatherRes.data[0];
     return `City: ${data.city_name}
-      Weather: ${data.weather.description}
-      Temperature: ${data.temp}
-      Feels Like: ${data.app_temp}
-      Humidity: ${data.rh}%
-      Wind: ${data.wind_spd} m/s
-      Visibility: ${data.vis} km`;
+Weather: ${data.weather.description}
+Temperature: ${data.temp}
+Feels Like: ${data.app_temp}
+Humidity: ${data.rh}%
+Wind: ${data.wind_spd} m/s
+Visibility: ${data.vis} km`.trim();
   } catch (err) {
     return `Failed to fetch weather data: ${(err as Error).message}`;
   }

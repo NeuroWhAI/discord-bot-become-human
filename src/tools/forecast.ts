@@ -41,15 +41,14 @@ export async function execute(arg: string): Promise<string> {
     return `City: ${weatherRes.city_name}\nToday: ${getCurrentDate()}\n\n` +
       weatherRes.data.map((day) =>
         `Date: ${day.valid_date}
-        Weather: ${day.weather.description}
-        Average Temperature: ${day.temp}
-        Minimum Temperature: ${day.min_temp}
-        Maximum Temperature: ${day.max_temp}
-        Humidity: ${day.rh}%
-        Wind: ${day.wind_spd} m/s
-        Visibility: ${day.vis} km
-        Probability of Precipitation: ${day.pop}%
-        `.trim()
+Weather: ${day.weather.description}
+Average Temperature: ${day.temp}
+Minimum Temperature: ${day.min_temp}
+Maximum Temperature: ${day.max_temp}
+Humidity: ${day.rh}%
+Wind: ${day.wind_spd} m/s
+Visibility: ${day.vis} km
+Probability of Precipitation: ${day.pop}%`.trim()
       ).join('\n\n');
   } catch (err) {
     return `Failed to fetch weather data: ${(err as Error).message}`;
