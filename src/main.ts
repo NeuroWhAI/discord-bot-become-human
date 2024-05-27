@@ -130,14 +130,33 @@ client.on(Events.MessageCreate, async (msg) => {
 });
 
 function makeChatMessageFrom(msg: Message): ChatMessage {
+  const emojiUrls: Set<string> = new Set();
+  const emojiMatches = msg.content.matchAll(/<a?:\w+:(\d+)>/g);
+  for (const match of emojiMatches) {
+    const [fullMatch, emojiId] = match;
+    const isAnimated = fullMatch.startsWith('<a:');
+    const emojiUrl = `https://cdn.discordapp.com/emojis/${emojiId}.${
+      isAnimated ? 'gif' : 'png'
+    }`;
+    if (emojiUrls.size < 3) {
+      emojiUrls.add(emojiUrl);
+    }
+  }
+
+  const imageUrls = msg.attachments.map((attachment) => attachment.url).filter((
+    url,
+  ) => /\.(png|jpeg|jpg|gif|webp)$/g.test(new URL(url).pathname)).slice(0, 4);
+
+  const stickerUrls = msg.stickers.map((s) => s.url).filter((url) =>
+    /\.(png|jpeg|jpg|gif|webp)$/g.test(new URL(url).pathname)
+  ).slice(0, 1);
+
   return new ChatMessage({
     authorId: msg.author.tag,
     author: msg.member ? msg.member.displayName : msg.author.displayName,
     content: msg.cleanContent,
     date: msg.createdAt,
-    imageUrls: msg.attachments.map((attachment) => attachment.url).filter((
-      url,
-    ) => /\.(png|jpeg|jpg|webp)$/g.test(new URL(url).pathname)),
+    imageUrls: [...emojiUrls, ...imageUrls, ...stickerUrls],
   });
 }
 
