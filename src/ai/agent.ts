@@ -212,9 +212,7 @@ export class Agent {
       if (cmd === 'STOP' || cmd === 'SWITCH') {
         console.log('# ' + cmd);
 
-        if (cmd === 'STOP') {
-          this.running = false;
-        }
+        this.running = cmd === 'SWITCH';
 
         const summary = await this.summarize(this.summaryTarget);
         const summaryContent =
