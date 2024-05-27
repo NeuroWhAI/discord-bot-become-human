@@ -18,11 +18,16 @@ export interface NumberParameter {
   minimum?: number;
   maximum?: number;
 }
+export interface BooleanParameter {
+  type: 'boolean';
+  description?: string;
+}
 
 export type FunctionParameters =
   | ObjectParameter
   | StringParameter
-  | NumberParameter;
+  | NumberParameter
+  | BooleanParameter;
 
 export interface FunctionDefinition {
   name: string;
