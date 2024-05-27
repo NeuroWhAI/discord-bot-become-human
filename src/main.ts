@@ -120,7 +120,7 @@ client.on(Events.MessageCreate, async (msg) => {
         `# Triggered after ${Math.round(triggerTime / 1000 / 60)}m`,
       );
       chatTriggers.delete(channelId);
-      if (Math.random() < 0.1) {
+      if (agentRunning || Math.random() < 0.1) {
         console.log('# Start triggered chat');
         await chat(msg.channel);
       }
