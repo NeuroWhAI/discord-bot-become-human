@@ -28,8 +28,9 @@ export async function execute(arg: string): Promise<string> {
   try {
     const { city } = JSON.parse(arg);
     const apiKey = env.WEATHER_BIT_API_KEY;
-    const url =
-      `https://api.weatherbit.io/v2.0/current?key=${apiKey}&city=${city}`;
+    const url = `https://api.weatherbit.io/v2.0/current?key=${apiKey}&city=${
+      encodeURIComponent(city)
+    }`;
     const res = await fetch(url);
     if (!res.ok) {
       return `HTTP error! Status: ${res.status}`;
