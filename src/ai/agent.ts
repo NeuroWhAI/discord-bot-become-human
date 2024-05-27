@@ -62,50 +62,50 @@ export class Agent {
   }
 
   public async chat(newMessages: ChatMessage[]): Promise<string> {
+    // 새 대화 이력 추가.
+    for (const msg of newMessages) {
+      let text = `${msg.author} — ${localeDate(msg.date)}\n${msg.content}`;
+      let imageUrls: string[];
+
+      if (msg.refMessage) {
+        const refMsg = msg.refMessage;
+        text =
+          `${refMsg.author} — past\n${refMsg.content}\n--- Referred to by the following message ---\n` +
+          text;
+        imageUrls = [...refMsg.imageUrls, ...msg.imageUrls];
+      } else {
+        imageUrls = msg.imageUrls;
+      }
+
+      if (this.summaryTarget) {
+        this.summaryTarget += `\n\n${text}`;
+      } else {
+        this.summaryTarget = text;
+      }
+
+      if (imageUrls.length > 0) {
+        this.summaryTarget += '\n(attached images)';
+      }
+
+      this.messages.push({
+        role: 'user',
+        content: [
+          { type: 'text', text },
+          ...imageUrls.map((url) => ({
+            type: 'image_url' as const,
+            image_url: { url },
+          })),
+        ],
+        name: msg.authorId.replaceAll(/[^a-zA-Z0-9_-]/g, '_'),
+      });
+    }
+
+    if (this.typing) {
+      return '';
+    }
+    this.typing = true;
+
     try {
-      // 새 대화 이력 추가.
-      for (const msg of newMessages) {
-        let text = `${msg.author} — ${localeDate(msg.date)}\n${msg.content}`;
-        let imageUrls: string[];
-
-        if (msg.refMessage) {
-          const refMsg = msg.refMessage;
-          text =
-            `${refMsg.author} — past\n${refMsg.content}\n--- Referred to by the following message ---\n` +
-            text;
-          imageUrls = [...refMsg.imageUrls, ...msg.imageUrls];
-        } else {
-          imageUrls = msg.imageUrls;
-        }
-
-        if (this.summaryTarget) {
-          this.summaryTarget += `\n\n${text}`;
-        } else {
-          this.summaryTarget = text;
-        }
-
-        if (imageUrls.length > 0) {
-          this.summaryTarget += '\n(attached images)';
-        }
-
-        this.messages.push({
-          role: 'user',
-          content: [
-            { type: 'text', text },
-            ...imageUrls.map((url) => ({
-              type: 'image_url' as const,
-              image_url: { url },
-            })),
-          ],
-          name: msg.authorId.replaceAll(/[^a-zA-Z0-9_-]/g, '_'),
-        });
-      }
-
-      if (this.typing) {
-        return '';
-      }
-      this.typing = true;
-
       const completion = await this.openai.chat.completions.create({
         model: this.chatModel,
         // deno-lint-ignore no-explicit-any
