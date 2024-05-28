@@ -21,17 +21,17 @@ export const metadata: FunctionDefinition = {
       },
       prompt: {
         type: 'string',
-        description: 'What you wish to see in the output image. in English',
+        description:
+          'Description of the final output image you wish to see. in English',
       },
       search_prompt: {
         type: 'string',
-        description:
-          'Short description of what to redraw in the image. in English',
+        description: 'Items to redraw in the image. in English',
       },
       negative_prompt: {
         type: 'string',
         description:
-          'A blurb of text describing what you do not wish to see in the output image. in English',
+          'Items you do not wish to see in the output image. in English',
       },
     },
     required: ['image_id', 'prompt', 'search_prompt'],

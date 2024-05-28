@@ -35,7 +35,7 @@ export const metadata: FunctionDefinition = {
       negative_prompt: {
         type: 'string',
         description:
-          'A blurb of text describing what you do not wish to see in the output image. in English',
+          'Items you do not wish to see in the output image. in English',
       },
       style_preset: {
         type: 'string',
