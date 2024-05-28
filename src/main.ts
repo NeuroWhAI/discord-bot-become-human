@@ -110,8 +110,8 @@ client.on(Events.MessageCreate, async (msg) => {
     msg.channel.sendTyping();
     await chat(msg.channel);
   } else {
-    const agentRunning = agentManager.checkRunning(channelId);
-    const triggerTime = agentRunning
+    const agentChatting = agentManager.checkChatting(channelId);
+    const triggerTime = agentChatting
       ? 8 * 1000 + Math.floor(4 * 1000 * Math.random())
       : 5 * 60 * 1000 + Math.floor(2 * 3600 * 1000 * Math.random());
 
@@ -120,7 +120,7 @@ client.on(Events.MessageCreate, async (msg) => {
         `# Triggered after ${Math.round(triggerTime / 1000 / 60)}m`,
       );
       chatTriggers.delete(channelId);
-      if (agentRunning || Math.random() < 0.1) {
+      if (agentChatting || Math.random() < 0.1) {
         console.log('# Start triggered chat');
         await chat(msg.channel);
       }
@@ -170,10 +170,10 @@ async function chat(channel: TextBasedChannel) {
     );
     await channel.send({ content: respond });
 
-    const timeoutId = setTimeout(() => {
+    const timeoutId = setTimeout(async () => {
       console.log('# Timeout');
       chatTimeouts.delete(channelId);
-      agentManager.setRunning(channelId, false);
+      await agentManager.stopChatting(channelId);
     }, 5 * 60 * 1000);
     chatTimeouts.set(channelId, timeoutId);
   }

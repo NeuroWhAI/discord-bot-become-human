@@ -45,15 +45,16 @@ export class AgentManager {
     return res;
   }
 
-  public checkRunning(channelId: string): boolean {
+  public checkChatting(channelId: string): boolean {
     const agent = this.agents.get(channelId);
     if (!agent) return false;
-    return agent.running;
+    return agent.chatting;
   }
 
-  public setRunning(channelId: string, running: boolean) {
+  public async stopChatting(channelId: string) {
     const agent = this.agents.get(channelId);
     if (!agent) return;
-    agent.running = running;
+    agent.chatting = false;
+    await agent.compressContext();
   }
 }

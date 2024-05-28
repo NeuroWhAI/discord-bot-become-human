@@ -55,14 +55,14 @@ export class Agent {
   private summaryTarget: string = '';
   private messages: AgentMessage[] = [];
   private prevSummaryIndex: number = -1;
-  private typing: boolean = false;
+  private thinking: boolean = false;
 
-  private _running: boolean = false;
-  public get running(): boolean {
-    return this._running;
+  private _chatting: boolean = false;
+  public get chatting(): boolean {
+    return this._chatting;
   }
-  public set running(v: boolean) {
-    this._running = v;
+  public set chatting(v: boolean) {
+    this._chatting = v;
   }
 
   private reset() {
@@ -72,8 +72,8 @@ export class Agent {
       content: this.chatPrompt,
     }];
     this.prevSummaryIndex = -1;
-    this.running = false;
-    this.typing = false;
+    this.chatting = false;
+    this.thinking = false;
   }
 
   public async chat(newMessages: ChatMessage[]): Promise<string> {
@@ -119,10 +119,10 @@ export class Agent {
       });
     }
 
-    if (this.typing) {
+    if (this.thinking) {
       return '';
     }
-    this.typing = true;
+    this.thinking = true;
 
     try {
       const completion = await this.openai.chat.completions.create({
@@ -218,32 +218,10 @@ export class Agent {
       }
 
       if (cmd === 'STOP' || cmd === 'SWITCH') {
-        this.running = cmd === 'SWITCH';
-
-        const summary = await this.summarize(this.summaryTarget);
-        const summaryContent =
-          '--- Below is a summary of previous conversation ---\n\n' +
-          summary +
-          '\n\n--- This is end of the summary. ---';
-        console.log(summaryContent);
-
-        this.summaryTarget = summaryContent;
-
-        if (this.prevSummaryIndex >= 0) {
-          this.messages = [
-            this.messages[0], // System message.
-            ...this.messages.slice(this.prevSummaryIndex),
-          ];
-        }
-
-        this.prevSummaryIndex = this.messages.length;
-        this.messages.push({
-          role: 'user',
-          content: summaryContent,
-          name: 'summarizer',
-        });
+        this.chatting = cmd === 'SWITCH';
+        await this.compress();
       } else if (cmd !== 'IDLE') {
-        this.running = true;
+        this.chatting = true;
       }
 
       console.log(`# Context cnt: ${this.messages.length}`);
@@ -267,8 +245,46 @@ export class Agent {
       });
       return errMessage;
     } finally {
-      this.typing = false;
+      this.thinking = false;
     }
+  }
+
+  public async compressContext() {
+    if (this.thinking) {
+      return;
+    }
+    this.thinking = true;
+
+    try {
+      await this.compress();
+    } finally {
+      this.thinking = false;
+    }
+  }
+
+  private async compress() {
+    const summary = await this.summarize(this.summaryTarget);
+    const summaryContent =
+      '--- Below is a summary of previous conversation ---\n\n' +
+      summary +
+      '\n\n--- This is end of the summary. ---';
+    console.log(summaryContent);
+
+    this.summaryTarget = summaryContent;
+
+    if (this.prevSummaryIndex >= 0) {
+      this.messages = [
+        this.messages[0], // System message.
+        ...this.messages.slice(this.prevSummaryIndex),
+      ];
+    }
+
+    this.prevSummaryIndex = this.messages.length;
+    this.messages.push({
+      role: 'user',
+      content: summaryContent,
+      name: 'summarizer',
+    });
   }
 
   private async summarize(content: string): Promise<string> {
