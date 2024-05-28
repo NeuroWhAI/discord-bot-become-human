@@ -54,7 +54,7 @@ export class Agent {
 
   private summaryTarget: string = '';
   private messages: AgentMessage[] = [];
-  private prevSummaryIndex: number = -1;
+  private prevSummaryIndices: number[] = [];
   private thinking: boolean = false;
 
   private _chatting: boolean = false;
@@ -71,7 +71,7 @@ export class Agent {
       role: 'system',
       content: this.chatPrompt,
     }];
-    this.prevSummaryIndex = -1;
+    this.prevSummaryIndices = [];
     this.chatting = false;
     this.thinking = false;
   }
@@ -79,7 +79,7 @@ export class Agent {
   public async chat(newMessages: ChatMessage[]): Promise<string> {
     const backupSummaryTarget = this.summaryTarget;
     const backupMessages = [...this.messages];
-    const backupPrevSummaryIndex = this.prevSummaryIndex;
+    const backupPrevSummaryIndices = [...this.prevSummaryIndices];
 
     // 새 대화 이력 추가.
     for (const msg of newMessages) {
@@ -230,7 +230,7 @@ export class Agent {
     } catch (err) {
       this.summaryTarget = backupSummaryTarget;
       this.messages = backupMessages;
-      this.prevSummaryIndex = backupPrevSummaryIndex;
+      this.prevSummaryIndices = backupPrevSummaryIndices;
 
       const errMessage = `Failed to generate response.\n${
         (err as Error).message
@@ -272,14 +272,22 @@ export class Agent {
 
     this.summaryTarget = summaryContent;
 
-    if (this.prevSummaryIndex >= 0) {
+    if (
+      this.prevSummaryIndices.length > 3 ||
+      (this.prevSummaryIndices.length > 0 && this.messages.length > 128)
+    ) {
       this.messages = [
         this.messages[0], // System message.
-        ...this.messages.slice(this.prevSummaryIndex),
+        ...this.messages.slice(this.prevSummaryIndices[0]),
       ];
+      for (let i = 1; i < this.prevSummaryIndices.length; i++) {
+        this.prevSummaryIndices[i] -= this.prevSummaryIndices[0] - 1;
+      }
+      this.prevSummaryIndices = this.prevSummaryIndices.slice(1);
     }
 
-    this.prevSummaryIndex = this.messages.length;
+    this.prevSummaryIndices.push(this.messages.length);
+
     this.messages.push({
       role: 'user',
       content: summaryContent,
