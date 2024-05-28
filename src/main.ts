@@ -163,7 +163,22 @@ function makeChatMessageFrom(msg: Message): ChatMessage {
 async function chat(channel: TextBasedChannel) {
   const channelId = channel.id;
   const messages = chatBuffer.flush(channelId);
-  const respond = await agentManager.chat(channelId, messages);
+  const respond = await agentManager.chat(
+    channelId,
+    messages,
+    async (img, ext) => {
+      const stream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(img);
+          controller.close();
+        },
+      });
+      await channel.send({
+        files: [{ attachment: stream, name: `image.${ext}` }],
+      });
+    },
+  );
+
   if (respond) {
     console.log(
       `[assistant]\n${respond}`,

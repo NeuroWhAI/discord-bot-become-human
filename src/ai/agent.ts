@@ -1,3 +1,4 @@
+import { decodeBase64 } from 'std/encoding/base64.ts';
 import OpenAI from 'openai';
 import { ChatMessage } from '../chat/chat-message.ts';
 import { ChatCompletionTool, getTool } from './tool.ts';
@@ -76,7 +77,10 @@ export class Agent {
     this.thinking = false;
   }
 
-  public async chat(newMessages: ChatMessage[]): Promise<string> {
+  public async chat(
+    newMessages: ChatMessage[],
+    imageCallback: (image: Uint8Array, format: string) => Promise<void>,
+  ): Promise<string> {
     const backupSummaryTarget = this.summaryTarget;
     const backupMessages = [...this.messages];
     const backupPrevSummaryIndices = [...this.prevSummaryIndices];
@@ -148,6 +152,8 @@ export class Agent {
           tool_calls: res.tool_calls,
         });
 
+        const afterToolMessages: AgentMessage[] = [];
+
         for (const toolCall of toolCalls) {
           const functionName = toolCall.function.name;
           const functionArg = toolCall.function.arguments;
@@ -168,12 +174,37 @@ export class Agent {
 
           console.log(`# Tool response:\n${toolRes}`);
 
-          this.messages.push({
+          const toolMessage: AgentMessage = {
             tool_call_id: toolCall.id,
             role: 'tool',
             name: functionName,
             content: toolRes,
-          });
+          };
+
+          if (toolRes.startsWith('data:image/')) {
+            try {
+              const imgData = toolRes.substring(toolRes.indexOf(',') + 1);
+              const imgFormat = /image\/(\w+);/g.exec(toolRes)?.[1] ?? 'png';
+              await imageCallback(decodeBase64(imgData), imgFormat);
+
+              toolMessage.content =
+                'The image has been successfully shared with users.';
+
+              afterToolMessages.push({
+                role: 'user',
+                content: [
+                  { type: 'text', text: '(assistant generated image)' },
+                  { type: 'image_url', image_url: { url: toolRes } },
+                ],
+              });
+            } catch (err) {
+              toolMessage.content = `Fail to share the image with users.\n${
+                (err as Error).message
+              }`;
+            }
+          }
+
+          this.messages.push(toolMessage);
         }
 
         const completion2 = await this.openai.chat.completions.create({
@@ -187,6 +218,8 @@ export class Agent {
         });
         const res2 = completion2.choices[0].message;
         resContent = res2.content?.trim() ?? '';
+
+        afterToolMessages.forEach((msg) => this.messages.push(msg));
       }
 
       let cmd: '' | 'IDLE' | 'STOP' | 'SWITCH' = '';
@@ -232,6 +265,8 @@ export class Agent {
 
       return resContent;
     } catch (err) {
+      console.log((err as Error).stack);
+
       this.summaryTarget = backupSummaryTarget;
       this.messages = backupMessages;
       this.prevSummaryIndices = backupPrevSummaryIndices;
