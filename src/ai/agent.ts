@@ -92,7 +92,7 @@ export class Agent {
       let text = `${msg.author} — ${localeDate(msg.date)}\n${msg.content}`;
 
       if (msg.imageUrls.length > 0) {
-        text += '\nattached image IDs:';
+        text += '\n(hint) attached image IDs:';
         for (const imgUrl of msg.imageUrls) {
           const id = this.toolContext.imgStorage.setUrl(imgUrl);
           text += `\n- ${id}`;
@@ -106,7 +106,7 @@ export class Agent {
         let refText = `${refMsg.author} — past\n${refMsg.content}`;
 
         if (refMsg.imageUrls.length > 0) {
-          refText += '\nattached image IDs:';
+          refText += '\n(hint) attached image IDs:';
           for (const imgUrl of refMsg.imageUrls) {
             const id = this.toolContext.imgStorage.setUrl(imgUrl);
             refText += `\n- ${id}`;
