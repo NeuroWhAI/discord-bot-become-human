@@ -134,6 +134,8 @@ export class Agent {
         // deno-lint-ignore no-explicit-any
         tools: this.tools as any,
         tool_choice: 'auto',
+        presence_penalty: 0.1,
+        frequency_penalty: 0.1,
       });
       const res = completion.choices[0].message;
       let resContent = res.content?.trim() ?? '';
@@ -180,6 +182,8 @@ export class Agent {
           messages: this.messages as any,
           temperature: 0.5,
           top_p: 0.5,
+          presence_penalty: 0.1,
+          frequency_penalty: 0.1,
         });
         const res2 = completion2.choices[0].message;
         resContent = res2.content?.trim() ?? '';
