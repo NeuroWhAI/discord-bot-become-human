@@ -358,9 +358,10 @@ export class Agent {
 
     this.summaryTarget = summaryContent;
 
+    // 토큰 사용량 절약을 위해 최근 대화 및 요약만 남김.
     if (
       this.prevSummaryIndices.length > 3 ||
-      (this.prevSummaryIndices.length > 0 && this.messages.length > 128)
+      (this.prevSummaryIndices.length > 0 && this.messages.length > 64)
     ) {
       this.messages = [
         this.messages[0], // System message.
@@ -370,6 +371,55 @@ export class Agent {
         this.prevSummaryIndices[i] -= this.prevSummaryIndices[0] - 1;
       }
       this.prevSummaryIndices = this.prevSummaryIndices.slice(1);
+    }
+
+    // 토큰 사용량 절약을 위해 좀 이전의 메시지 내 이미지들은 삭제.
+    if (this.prevSummaryIndices.length > 0 || this.messages.length > 64) {
+      const expiredEndIndex = this.prevSummaryIndices.length > 0
+        ? this.prevSummaryIndices[this.prevSummaryIndices.length - 1]
+        : this.messages.length;
+
+      for (let i = 1; i < expiredEndIndex; i++) {
+        const msg = this.messages[i];
+        if (Array.isArray(msg.content)) {
+          let expiredImgCnt = 0;
+          for (let j = 0; j < msg.content.length; j++) {
+            const content = msg.content[j];
+            if (content.type === 'image_url') {
+              msg.content.splice(j, 1);
+              j--;
+              expiredImgCnt++;
+            }
+          }
+
+          if (expiredImgCnt > 0) {
+            const expirationPhrase = `(${expiredImgCnt} image${
+              expiredImgCnt > 1 ? 's' : ''
+            } expired)`;
+
+            // 기존 텍스트 컨텐츠가 있으면 거기 만료 문구 추가.
+            for (const content of msg.content) {
+              if (content.type === 'text') {
+                if (content.text) {
+                  content.text += '\n' + expirationPhrase;
+                } else {
+                  content.text = expirationPhrase;
+                }
+                expiredImgCnt = 0;
+                break;
+              }
+            }
+
+            // 없으면 새 텍스트 컨텐츠로 만료 문구 추가.
+            if (expiredImgCnt > 0) {
+              msg.content.push({
+                type: 'text',
+                text: expirationPhrase,
+              });
+            }
+          }
+        }
+      }
     }
 
     this.prevSummaryIndices.push(this.messages.length);
