@@ -43,10 +43,70 @@ export interface ChatCompletionTool {
   type: 'function';
 }
 
+class ImageUrlStorageData {
+  constructor(public readonly url: string, public lastAccess: number) {}
+}
+
+export class ImageUrlStorage {
+  private id2data: Map<string, ImageUrlStorageData> = new Map();
+  private url2id: Map<string, string> = new Map();
+  private inc: number = 0;
+
+  public setUrl(url: string): string {
+    let id = this.url2id.get(url);
+    if (id) {
+      return id;
+    }
+
+    if (this.id2data.size > 100) {
+      let oldId = '';
+      let oldData: ImageUrlStorageData | null = null;
+      let oldTime = Date.now();
+
+      for (const [id, data] of this.id2data.entries()) {
+        if (data.lastAccess < oldTime) {
+          oldId = id;
+          oldData = data;
+          oldTime = data.lastAccess;
+        }
+      }
+
+      if (oldId && oldData) {
+        this.id2data.delete(oldId);
+        this.url2id.delete(oldData.url);
+      }
+    }
+
+    this.inc += 1;
+    id = 'i' + this.inc.toString(36);
+
+    this.id2data.set(id, new ImageUrlStorageData(url, Date.now()));
+    this.url2id.set(url, id);
+
+    return id;
+  }
+
+  public getUrlById(id: string): string | null {
+    const data = this.id2data.get(id);
+    if (!data) {
+      return null;
+    }
+    data.lastAccess = Date.now();
+    return data.url;
+  }
+}
+
+export class ToolContext {
+  private _imgStorage: ImageUrlStorage = new ImageUrlStorage();
+  public get imgStorage(): ImageUrlStorage {
+    return this._imgStorage;
+  }
+}
+
 export class Tool {
   constructor(
     metadata: FunctionDefinition,
-    execute: (arg: string) => Promise<string>,
+    execute: (arg: string, ctx: ToolContext) => Promise<string>,
   ) {
     this._metadata = metadata;
     this._execute = execute;
@@ -57,8 +117,8 @@ export class Tool {
     return this._metadata;
   }
 
-  private _execute: (arg: string) => Promise<string>;
-  public get execute(): (arg: string) => Promise<string> {
+  private _execute: (arg: string, ctx: ToolContext) => Promise<string>;
+  public get execute(): (arg: string, ctx: ToolContext) => Promise<string> {
     return this._execute;
   }
 }

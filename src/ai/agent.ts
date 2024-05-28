@@ -1,7 +1,7 @@
 import { decodeBase64 } from 'std/encoding/base64.ts';
 import OpenAI from 'openai';
 import { ChatMessage } from '../chat/chat-message.ts';
-import { ChatCompletionTool, getTool } from './tool.ts';
+import { ChatCompletionTool, getTool, ToolContext } from './tool.ts';
 
 interface ChatCompletionContentPartText {
   text: string;
@@ -53,6 +53,8 @@ export class Agent {
   private readonly summarizePrompt: string;
   private readonly tools: ChatCompletionTool[];
 
+  private readonly toolContext: ToolContext = new ToolContext();
+
   private summaryTarget: string = '';
   private incomingSummaryTarget: string = '';
   private messages: AgentMessage[] = [];
@@ -88,13 +90,32 @@ export class Agent {
     // 새 대화 이력 추가.
     for (const msg of newMessages) {
       let text = `${msg.author} — ${localeDate(msg.date)}\n${msg.content}`;
+
+      if (msg.imageUrls.length > 0) {
+        text += '\nattached image IDs:';
+        for (const imgUrl of msg.imageUrls) {
+          const id = this.toolContext.imgStorage.setUrl(imgUrl);
+          text += `\n- ${id}`;
+        }
+      }
+
       let imageUrls: string[];
 
       if (msg.refMessage) {
         const refMsg = msg.refMessage;
-        text =
-          `${refMsg.author} — past\n${refMsg.content}\n--- Referred to by the following message ---\n` +
+        let refText = `${refMsg.author} — past\n${refMsg.content}`;
+
+        if (refMsg.imageUrls.length > 0) {
+          refText += '\nattached image IDs:';
+          for (const imgUrl of refMsg.imageUrls) {
+            const id = this.toolContext.imgStorage.setUrl(imgUrl);
+            refText += `\n- ${id}`;
+          }
+        }
+
+        text = refText + '\n--- Referred to by the following message ---\n' +
           text;
+
         imageUrls = [...refMsg.imageUrls, ...msg.imageUrls];
       } else {
         imageUrls = msg.imageUrls;
@@ -182,7 +203,7 @@ export class Agent {
           try {
             const tool = getTool(functionName);
             toolRes = tool
-              ? await tool.execute(functionArg)
+              ? await tool.execute(functionArg, this.toolContext)
               : `The ${functionName} tool not found!`;
           } catch (err) {
             toolRes = `The ${functionName} tool failed to execute!\n${
@@ -205,13 +226,18 @@ export class Agent {
               const imgFormat = /image\/(\w+);/g.exec(toolRes)?.[1] ?? 'png';
               await imageCallback(decodeBase64(imgData), imgFormat);
 
+              const imgId = this.toolContext.imgStorage.setUrl(toolRes);
+
               toolMessage.content =
-                'The image has been successfully shared with users.';
+                `The image(ID: ${imgId}) has been successfully shared with users.`;
 
               afterToolMessages.push({
                 role: 'user',
                 content: [
-                  { type: 'text', text: '(assistant generated image)' },
+                  {
+                    type: 'text',
+                    text: `assistant generated image (ID: ${imgId})`,
+                  },
                   { type: 'image_url', image_url: { url: toolRes } },
                 ],
               });

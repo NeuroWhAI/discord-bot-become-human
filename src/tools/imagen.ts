@@ -6,7 +6,7 @@ import { load as loadEnv } from 'std/dotenv/mod.ts';
 const env = await loadEnv();
 
 import { encodeBase64 } from 'std/encoding/base64.ts';
-import { FunctionDefinition } from '../ai/tool.ts';
+import { FunctionDefinition, ToolContext } from '../ai/tool.ts';
 
 export const metadata: FunctionDefinition = {
   name: 'generate_one_image',
@@ -64,7 +64,7 @@ export const metadata: FunctionDefinition = {
   },
 };
 
-export async function execute(arg: string): Promise<string> {
+export async function execute(arg: string, _ctx: ToolContext): Promise<string> {
   try {
     const { prompt, aspect_ratio, negative_prompt, style_preset } = JSON.parse(
       arg,

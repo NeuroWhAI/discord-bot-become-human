@@ -5,7 +5,7 @@
 import { load as loadEnv } from 'std/dotenv/mod.ts';
 const env = await loadEnv();
 
-import { FunctionDefinition } from '../ai/tool.ts';
+import { FunctionDefinition, ToolContext } from '../ai/tool.ts';
 
 export const metadata: FunctionDefinition = {
   name: 'search_internet',
@@ -30,7 +30,7 @@ export const metadata: FunctionDefinition = {
   },
 };
 
-export async function execute(arg: string): Promise<string> {
+export async function execute(arg: string, _ctx: ToolContext): Promise<string> {
   const { query, include_details, include_images } = JSON.parse(arg);
   const requestPayload: SearchRequest = {
     api_key: env.TAVILY_API_KEY,
