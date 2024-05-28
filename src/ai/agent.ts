@@ -172,8 +172,6 @@ export class Agent {
             }`;
           }
 
-          console.log(`# Tool response:\n${toolRes}`);
-
           const toolMessage: AgentMessage = {
             tool_call_id: toolCall.id,
             role: 'tool',
@@ -182,6 +180,8 @@ export class Agent {
           };
 
           if (toolRes.startsWith('data:image/')) {
+            console.log(`# Tool response: (image)`);
+
             try {
               const imgData = toolRes.substring(toolRes.indexOf(',') + 1);
               const imgFormat = /image\/(\w+);/g.exec(toolRes)?.[1] ?? 'png';
@@ -202,6 +202,8 @@ export class Agent {
                 (err as Error).message
               }`;
             }
+          } else {
+            console.log(`# Tool response:\n${toolRes}`);
           }
 
           this.messages.push(toolMessage);
