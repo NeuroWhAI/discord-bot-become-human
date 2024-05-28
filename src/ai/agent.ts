@@ -92,7 +92,7 @@ export class Agent {
       let text = `${msg.author} — ${localeDate(msg.date)}\n${msg.content}`;
 
       if (msg.imageUrls.length > 0) {
-        text += '\n(hint) attached image IDs:';
+        text += '\nattached image IDs:';
         for (const imgUrl of msg.imageUrls) {
           const id = this.toolContext.imgStorage.setUrl(imgUrl);
           text += `\n- ${id}`;
@@ -106,7 +106,7 @@ export class Agent {
         let refText = `${refMsg.author} — past\n${refMsg.content}`;
 
         if (refMsg.imageUrls.length > 0) {
-          refText += '\n(hint) attached image IDs:';
+          refText += '\nattached image IDs:';
           for (const imgUrl of refMsg.imageUrls) {
             const id = this.toolContext.imgStorage.setUrl(imgUrl);
             refText += `\n- ${id}`;
@@ -229,7 +229,8 @@ export class Agent {
               const imgId = this.toolContext.imgStorage.setUrl(toolRes);
 
               toolMessage.content =
-                `The image(ID: ${imgId}) has been successfully shared with users.`;
+                `The image(ID: ${imgId}) has been successfully shared with users.` +
+                '\n(Do not print the ID.)';
 
               afterToolMessages.push({
                 role: 'user',
