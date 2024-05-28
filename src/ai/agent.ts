@@ -54,7 +54,9 @@ export class Agent {
   private readonly tools: ChatCompletionTool[];
 
   private summaryTarget: string = '';
+  private incomingSummaryTarget: string = '';
   private messages: AgentMessage[] = [];
+  private incomingMessages: AgentMessage[] = [];
   private prevSummaryIndices: number[] = [];
   private thinking: boolean = false;
 
@@ -68,10 +70,12 @@ export class Agent {
 
   private reset() {
     this.summaryTarget = '';
+    this.incomingSummaryTarget = '';
     this.messages = [{
       role: 'system',
       content: this.chatPrompt,
     }];
+    this.incomingMessages = [];
     this.prevSummaryIndices = [];
     this.chatting = false;
     this.thinking = false;
@@ -81,10 +85,6 @@ export class Agent {
     newMessages: ChatMessage[],
     imageCallback: (image: Uint8Array, format: string) => Promise<void>,
   ): Promise<string> {
-    const backupSummaryTarget = this.summaryTarget;
-    const backupMessages = [...this.messages];
-    const backupPrevSummaryIndices = [...this.prevSummaryIndices];
-
     // 새 대화 이력 추가.
     for (const msg of newMessages) {
       let text = `${msg.author} — ${localeDate(msg.date)}\n${msg.content}`;
@@ -100,17 +100,17 @@ export class Agent {
         imageUrls = msg.imageUrls;
       }
 
-      if (this.summaryTarget) {
-        this.summaryTarget += `\n\n${text}`;
+      if (this.incomingSummaryTarget) {
+        this.incomingSummaryTarget += `\n\n${text}`;
       } else {
-        this.summaryTarget = text;
+        this.incomingSummaryTarget = text;
       }
 
       if (imageUrls.length > 0) {
-        this.summaryTarget += '\n(attached images)';
+        this.incomingSummaryTarget += '\n(attached images)';
       }
 
-      this.messages.push({
+      this.incomingMessages.push({
         role: 'user',
         content: [
           { type: 'text', text },
@@ -127,6 +127,24 @@ export class Agent {
       return '';
     }
     this.thinking = true;
+
+    if (this.incomingSummaryTarget) {
+      if (this.summaryTarget) {
+        this.summaryTarget += `\n\n${this.incomingSummaryTarget}`;
+      } else {
+        this.summaryTarget = this.incomingSummaryTarget;
+      }
+      this.incomingSummaryTarget = '';
+    }
+
+    if (this.incomingMessages.length > 0) {
+      this.messages.push(...this.incomingMessages);
+      this.incomingMessages = [];
+    }
+
+    const backupSummaryTarget = this.summaryTarget;
+    const backupMessages = [...this.messages];
+    const backupPrevSummaryIndices = [...this.prevSummaryIndices];
 
     try {
       const completion = await this.openai.chat.completions.create({
