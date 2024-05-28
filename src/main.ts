@@ -7,10 +7,14 @@ import { ChatMessage } from './chat/chat-message.ts';
 import { AgentManager } from './ai/agent-manager.ts';
 import { TextBasedChannel } from 'discord.js';
 import { Message } from 'discord.js';
+import { MessageReaction } from 'discord.js';
 
 const chatBuffer = new ChatBuffer();
 const agentManager = new AgentManager();
-const chatTriggers = new Map<string, number>();
+const chatTriggers = new Map<
+  string,
+  [number, Promise<MessageReaction> | null]
+>();
 const chatTimeouts = new Map<string, number>();
 
 const client = new Client({
@@ -91,9 +95,12 @@ client.on(Events.MessageCreate, async (msg) => {
     return;
   }
 
-  let triggerId = chatTriggers.get(channelId);
-  if (triggerId != null) {
+  const triggerData = chatTriggers.get(channelId);
+  if (triggerData != null) {
+    const [triggerId, lookingEmoji] = triggerData;
     clearTimeout(triggerId);
+    lookingEmoji?.then((emoji) => emoji.users.remove()).catch(() => {});
+
     chatTriggers.delete(channelId);
   }
 
@@ -107,25 +114,35 @@ client.on(Events.MessageCreate, async (msg) => {
     user.id === botUser.id
   );
   if (botMentioned) {
-    msg.channel.sendTyping();
+    const loading = msg.react('⏳');
     await chat(msg.channel);
+    loading.then((emoji) => emoji.users.remove());
   } else {
     const agentChatting = agentManager.checkChatting(channelId);
     const triggerTime = agentChatting
       ? 8 * 1000 + Math.floor(4 * 1000 * Math.random())
       : 5 * 60 * 1000 + Math.floor(2 * 3600 * 1000 * Math.random());
 
-    triggerId = setTimeout(async () => {
+    let lookingEmoji: Promise<MessageReaction> | null = null;
+    if (agentChatting) {
+      lookingEmoji = msg.react('👀');
+    }
+
+    const triggerId = setTimeout(async () => {
       console.log(
         `# Triggered after ${Math.round(triggerTime / 1000 / 60)}m`,
       );
       chatTriggers.delete(channelId);
+
       if (agentChatting || Math.random() < 0.1) {
         console.log('# Start triggered chat');
+        lookingEmoji?.then((emoji) => emoji.users.remove()).catch(() => {});
+        const loading = msg.react('⏳');
         await chat(msg.channel);
+        loading.then((emoji) => emoji.users.remove());
       }
     }, triggerTime);
-    chatTriggers.set(channelId, triggerId);
+    chatTriggers.set(channelId, [triggerId, lookingEmoji]);
   }
 });
 
