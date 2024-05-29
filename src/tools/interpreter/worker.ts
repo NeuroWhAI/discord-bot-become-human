@@ -40,6 +40,7 @@ async function runPython(data: WorkerMessageExecute) {
 
   files.forEach((file) => py.FS.writeFile(file.id, file.data));
 
+  await py.loadPackagesFromImports(code);
   const res = await py.runPythonAsync(code);
 
   if (res != null) {

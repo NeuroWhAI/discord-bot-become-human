@@ -81,7 +81,7 @@ export async function execute(arg: string, ctx: ToolContext): Promise<string> {
       timeoutId = setTimeout(() => {
         worker.terminate();
         resolve('Timeout!');
-      }, 8000);
+      }, 16 * 1000);
     });
 
     const result = await job;
