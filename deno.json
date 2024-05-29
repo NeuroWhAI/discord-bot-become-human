@@ -5,7 +5,8 @@
   "imports": {
     "std/": "https://deno.land/std@0.224.0/",
     "discord.js": "npm:discord.js@14.15.2",
-    "openai": "npm:openai@4.47.1"
+    "openai": "npm:openai@4.47.1",
+    "pyodide": "npm:pyodide@0.26.0"
   },
   "tasks": {
     "start": "deno run --allow-read --allow-env --allow-net src/main.ts",

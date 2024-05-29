@@ -13,7 +13,7 @@ export interface StringParameter {
   format?: 'date-time' | 'email' | 'hostname' | 'ipv4' | 'ipv6' | 'uri';
 }
 export interface NumberParameter {
-  type: 'integer';
+  type: 'number';
   description?: string;
   minimum?: number;
   maximum?: number;
@@ -22,12 +22,20 @@ export interface BooleanParameter {
   type: 'boolean';
   description?: string;
 }
+export interface ArrayParameter {
+  type: 'array';
+  items: {
+    type: 'string' | 'number' | 'boolean';
+  };
+  description?: string;
+}
 
 export type FunctionParameters =
   | ObjectParameter
   | StringParameter
   | NumberParameter
-  | BooleanParameter;
+  | BooleanParameter
+  | ArrayParameter;
 
 export interface FunctionDefinition {
   name: string;

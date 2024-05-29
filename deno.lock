@@ -4,7 +4,8 @@
     "specifiers": {
       "npm:@types/node": "npm:@types/node@18.16.19",
       "npm:discord.js@14.15.2": "npm:discord.js@14.15.2",
-      "npm:openai@4.47.1": "npm:openai@4.47.1"
+      "npm:openai@4.47.1": "npm:openai@4.47.1",
+      "npm:pyodide@0.26.0": "npm:pyodide@0.26.0"
     },
     "npm": {
       "@discordjs/builders@1.8.1": {
@@ -230,6 +231,12 @@
           "web-streams-polyfill": "web-streams-polyfill@3.3.3"
         }
       },
+      "pyodide@0.26.0": {
+        "integrity": "sha512-6thkjsvbvebqNlb2mtkVF5ODcWUYT0lVuOgww4cfEJFVM0J3MtTNPznVahVDzKOdCwSWvCfAqeEqP0wR6jj5uQ==",
+        "dependencies": {
+          "ws": "ws@8.17.0"
+        }
+      },
       "tr46@0.0.3": {
         "integrity": "sha512-N3WMsuqV66lT30CrXNbEjx4GEwlow3v6rr4mCcv6prnfwhS01rkgyFdjPNBYd9br7LpXV1+Emh01fHnq2Gdgrw==",
         "dependencies": {}
@@ -281,7 +288,8 @@
   "workspace": {
     "dependencies": [
       "npm:discord.js@14.15.2",
-      "npm:openai@4.47.1"
+      "npm:openai@4.47.1",
+      "npm:pyodide@0.26.0"
     ]
   }
 }
