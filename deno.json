@@ -9,7 +9,7 @@
     "pyodide": "npm:pyodide@0.26.0"
   },
   "tasks": {
-    "start": "deno run --allow-read --allow-env --allow-net src/main.ts",
+    "start": "deno run --allow-read --allow-write --allow-env --allow-net src/main.ts",
     "deploy": "deno run --allow-read --allow-env --allow-net src/deploy.ts",
     "dev": "deno run --allow-read --allow-env --allow-net --watch src/main.ts"
   },
