@@ -44,7 +44,7 @@ export async function execute(arg: string, ctx: ToolContext): Promise<string> {
       arg,
     );
 
-    const imgUrl = ctx.imgStorage.getUrlById(image_id);
+    const imgUrl = ctx.fileStorage.getUrlById(image_id);
     if (!imgUrl) {
       return 'Image not found!';
     }

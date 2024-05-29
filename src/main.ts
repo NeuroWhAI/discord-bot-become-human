@@ -168,12 +168,17 @@ function makeChatMessageFrom(msg: Message): ChatMessage {
     /\.(png|jpeg|jpg|gif|webp)$/g.test(new URL(url).pathname)
   ).slice(0, 1);
 
+  const fileUrls = msg.attachments.map((attachment) => attachment.url).filter((
+    url,
+  ) => /\.(txt|md|csv|json|xml)$/g.test(new URL(url).pathname));
+
   return new ChatMessage({
     authorId: msg.author.tag,
     author: msg.member ? msg.member.displayName : msg.author.displayName,
     content: msg.cleanContent,
     date: msg.createdAt,
     imageUrls: [...emojiUrls, ...imageUrls, ...stickerUrls],
+    fileUrls,
   });
 }
 

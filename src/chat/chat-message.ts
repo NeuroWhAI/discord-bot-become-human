@@ -1,11 +1,12 @@
 export class ChatMessage {
   constructor(
-    { authorId, author, content, date, imageUrls }: {
+    { authorId, author, content, date, imageUrls, fileUrls }: {
       authorId: string;
       author: string;
       content: string;
       date: Date;
       imageUrls: string[];
+      fileUrls: string[];
     },
   ) {
     this.authorId = authorId;
@@ -13,6 +14,7 @@ export class ChatMessage {
     this.content = content;
     this.date = date;
     this.imageUrls = imageUrls;
+    this.fileUrls = fileUrls;
   }
 
   public authorId: string;
@@ -20,6 +22,7 @@ export class ChatMessage {
   public content: string;
   public date: Date;
   public imageUrls: string[];
+  public fileUrls: string[];
 
   public refMessage: ChatMessage | null = null;
 }

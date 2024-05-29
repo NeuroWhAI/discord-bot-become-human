@@ -94,7 +94,14 @@ export class Agent {
       if (msg.imageUrls.length > 0) {
         text += '\nattached image IDs:';
         for (const imgUrl of msg.imageUrls) {
-          const id = this.toolContext.imgStorage.setUrl(imgUrl);
+          const id = this.toolContext.fileStorage.setImageUrl(imgUrl);
+          text += `\n- ${id}`;
+        }
+      }
+      if (msg.fileUrls.length > 0) {
+        text += '\nattached file IDs:';
+        for (const fileUrl of msg.fileUrls) {
+          const id = this.toolContext.fileStorage.setFileUrl(fileUrl);
           text += `\n- ${id}`;
         }
       }
@@ -108,7 +115,14 @@ export class Agent {
         if (refMsg.imageUrls.length > 0) {
           refText += '\nattached image IDs:';
           for (const imgUrl of refMsg.imageUrls) {
-            const id = this.toolContext.imgStorage.setUrl(imgUrl);
+            const id = this.toolContext.fileStorage.setImageUrl(imgUrl);
+            refText += `\n- ${id}`;
+          }
+        }
+        if (refMsg.fileUrls.length > 0) {
+          refText += '\nattached file IDs:';
+          for (const fileUrl of refMsg.fileUrls) {
+            const id = this.toolContext.fileStorage.setFileUrl(fileUrl);
             refText += `\n- ${id}`;
           }
         }
@@ -127,8 +141,11 @@ export class Agent {
         this.incomingSummaryTarget = text;
       }
 
-      if (imageUrls.length > 0) {
+      if (imageUrls.length) {
         this.incomingSummaryTarget += '\n(attached images)';
+      }
+      if (msg.fileUrls.length || msg.refMessage?.imageUrls.length) {
+        this.incomingSummaryTarget += '\n(attached files)';
       }
 
       this.incomingMessages.push({
@@ -226,7 +243,7 @@ export class Agent {
               const imgFormat = /image\/(\w+);/g.exec(toolRes)?.[1] ?? 'png';
               await imageCallback(decodeBase64(imgData), imgFormat);
 
-              const imgId = this.toolContext.imgStorage.setUrl(toolRes);
+              const imgId = this.toolContext.fileStorage.setImageUrl(toolRes);
 
               toolMessage.content =
                 `The image(ID: ${imgId}) has been successfully shared with users.` +

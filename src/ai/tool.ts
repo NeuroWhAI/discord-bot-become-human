@@ -51,16 +51,23 @@ export interface ChatCompletionTool {
   type: 'function';
 }
 
-class ImageUrlStorageData {
+class FileUrlStorageData {
   constructor(public readonly url: string, public lastAccess: number) {}
 }
 
-export class ImageUrlStorage {
-  private id2data: Map<string, ImageUrlStorageData> = new Map();
+export class FileUrlStorage {
+  private id2data: Map<string, FileUrlStorageData> = new Map();
   private url2id: Map<string, string> = new Map();
   private inc: number = 0;
 
-  public setUrl(url: string): string {
+  public setImageUrl(url: string) {
+    return this.setUrl(url, 'i');
+  }
+  public setFileUrl(url: string) {
+    return this.setUrl(url, 'f');
+  }
+
+  private setUrl(url: string, idPrefix: string): string {
     let id = this.url2id.get(url);
     if (id) {
       return id;
@@ -68,7 +75,7 @@ export class ImageUrlStorage {
 
     if (this.id2data.size > 100) {
       let oldId = '';
-      let oldData: ImageUrlStorageData | null = null;
+      let oldData: FileUrlStorageData | null = null;
       let oldTime = Date.now();
 
       for (const [id, data] of this.id2data.entries()) {
@@ -86,9 +93,9 @@ export class ImageUrlStorage {
     }
 
     this.inc += 1;
-    id = 'i' + this.inc.toString(36);
+    id = idPrefix + this.inc.toString(36);
 
-    this.id2data.set(id, new ImageUrlStorageData(url, Date.now()));
+    this.id2data.set(id, new FileUrlStorageData(url, Date.now()));
     this.url2id.set(url, id);
 
     return id;
@@ -105,9 +112,9 @@ export class ImageUrlStorage {
 }
 
 export class ToolContext {
-  private _imgStorage: ImageUrlStorage = new ImageUrlStorage();
-  public get imgStorage(): ImageUrlStorage {
-    return this._imgStorage;
+  private _fileStorage: FileUrlStorage = new FileUrlStorage();
+  public get fileStorage(): FileUrlStorage {
+    return this._fileStorage;
   }
 }
 
