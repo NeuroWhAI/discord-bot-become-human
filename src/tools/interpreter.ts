@@ -3,8 +3,8 @@
  */
 
 import { decodeBase64 } from 'std/encoding/base64.ts';
-import { loadPyodide } from 'pyodide';
 import { FunctionDefinition, ToolContext } from '../ai/tool.ts';
+import { WorkerMessage } from './interpreter/worker-message.ts';
 
 export const metadata: FunctionDefinition = {
   name: 'run_python_code',
@@ -26,23 +26,12 @@ export const metadata: FunctionDefinition = {
 };
 
 export async function execute(arg: string, ctx: ToolContext): Promise<string> {
+  let timeoutId: number | null = null;
+
   try {
     const { code, file_ids } = JSON.parse(arg);
 
-    let stdOutput = '';
-    const py = await loadPyodide({
-      fullStdLib: true,
-      stdout: (s) => {
-        stdOutput += s;
-        stdOutput += '\n';
-      },
-      stderr: (s) => {
-        stdOutput += s;
-        stdOutput += '\n';
-      },
-    });
-    py.setStdin({ error: true });
-
+    const files: { id: string; data: Uint8Array }[] = [];
     if (Array.isArray(file_ids)) {
       for (const fileId of file_ids) {
         const fileUrl = ctx.fileStorage.getUrlById(fileId);
@@ -52,33 +41,63 @@ export async function execute(arg: string, ctx: ToolContext): Promise<string> {
 
         if (fileUrl.startsWith('data:')) {
           const fileData = fileUrl.substring(fileUrl.indexOf(',') + 1);
-          py.FS.writeFile(fileId, decodeBase64(fileData));
+          files.push({ id: fileId, data: decodeBase64(fileData) });
         } else {
           const res = await fetch(fileUrl);
           if (!res.ok) {
             return `Fail to download file ${fileId}!\nHTTP Status: ${res.status}`;
           }
           const fileData = await res.arrayBuffer();
-          py.FS.writeFile(fileId, new Uint8Array(fileData));
+          files.push({ id: fileId, data: new Uint8Array(fileData) });
         }
       }
     }
 
-    const res = await py.runPythonAsync(code);
+    const job = new Promise<string>((resolve) => {
+      const worker = new Worker(
+        import.meta.resolve('./interpreter/worker.ts'),
+        {
+          type: 'module',
+        },
+      );
 
-    if (res != null) {
-      const resText = JSON.stringify(res, null, 1);
+      worker.onmessage = (evt) => {
+        const data = evt.data as WorkerMessage;
+        if (data.cmd === 'result') {
+          resolve(data.result);
+        }
+      };
+      worker.onerror = () => resolve('Failed to run Python code!');
+      worker.onmessageerror = () => resolve('Failed to run Python code!');
 
-      if (stdOutput) {
-        return resText + '\n\nStdout:\n' + stdOutput;
-      } else {
-        return resText;
-      }
-    } else {
-      return stdOutput;
+      worker.postMessage(
+        {
+          cmd: 'execute',
+          code,
+          files,
+        } satisfies WorkerMessage,
+      );
+
+      timeoutId = setTimeout(() => {
+        worker.terminate();
+        resolve('Timeout!');
+      }, 8000);
+    });
+
+    const result = await job;
+
+    if (timeoutId != null) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
     }
+
+    return result ? result : '(Empty result)';
   } catch (err) {
     console.log((err as Error).stack);
     return `Failed to run Python code: ${(err as Error).message}`;
+  } finally {
+    if (timeoutId != null) {
+      clearTimeout(timeoutId);
+    }
   }
 }
