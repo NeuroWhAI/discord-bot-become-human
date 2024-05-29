@@ -44,7 +44,7 @@ export interface FunctionDefinition {
    * https://platform.openai.com/docs/guides/text-generation/function-calling
    * https://json-schema.org/understanding-json-schema/
    */
-  parameters?: FunctionParameters;
+  parameters?: ObjectParameter;
 }
 export interface ChatCompletionTool {
   function: FunctionDefinition;
