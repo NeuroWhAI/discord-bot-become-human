@@ -52,7 +52,7 @@ export class Context {
     const summaryContent =
       '--- Below is a summary of previous conversation ---\n\n' +
       summary +
-      '\n\n--- This is end of the summary. ---';
+      '\n\n--- This is end of the summary ---';
     console.log(summaryContent);
 
     this.textHistory = summaryContent;
