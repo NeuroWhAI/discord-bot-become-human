@@ -150,13 +150,11 @@ function makeChatMessageFrom(msg: Message): ChatMessage {
   const emojiUrls: Set<string> = new Set();
   const emojiMatches = msg.content.matchAll(/<a?:\w+:(\d+)>/g);
   for (const match of emojiMatches) {
-    const [fullMatch, emojiId] = match;
-    const isAnimated = fullMatch.startsWith('<a:');
-    const emojiUrl = `https://cdn.discordapp.com/emojis/${emojiId}.${
-      isAnimated ? 'gif' : 'png'
-    }`;
-    if (emojiUrls.size < 3) {
-      emojiUrls.add(emojiUrl);
+    const emojiId = match[1];
+    const emojiUrl = `https://cdn.discordapp.com/emojis/${emojiId}.webp`;
+    emojiUrls.add(emojiUrl);
+    if (emojiUrls.size >= 3) {
+      break;
     }
   }
 
