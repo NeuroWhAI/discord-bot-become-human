@@ -2,8 +2,10 @@
   "version": "3",
   "packages": {
     "specifiers": {
+      "npm:@types/mime-types": "npm:@types/mime-types@2.1.4",
       "npm:@types/node": "npm:@types/node@18.16.19",
       "npm:discord.js@14.15.2": "npm:discord.js@14.15.2",
+      "npm:mime-types@2.1.35": "npm:mime-types@2.1.35",
       "npm:openai@4.47.1": "npm:openai@4.47.1",
       "npm:pyodide@0.26.0": "npm:pyodide@0.26.0"
     },
@@ -79,6 +81,10 @@
       },
       "@sapphire/snowflake@3.5.3": {
         "integrity": "sha512-jjmJywLAFoWeBi1W7994zZyiNWPIiqRRNAmSERxyg93xRGzNYvGjlZ0gR6x0F4gPRi2+0O6S71kOZYyr3cxaIQ==",
+        "dependencies": {}
+      },
+      "@types/mime-types@2.1.4": {
+        "integrity": "sha512-lfU4b34HOri+kAY5UheuFMWPDOI+OPceBSHZKp69gEyTL/mmJ4cnU6Y/rlme3UL3GyOn6Y42hyIEw0/q8sWx5w==",
         "dependencies": {}
       },
       "@types/node-fetch@2.6.11": {
@@ -288,6 +294,7 @@
   "workspace": {
     "dependencies": [
       "npm:discord.js@14.15.2",
+      "npm:mime-types@2.1.35",
       "npm:openai@4.47.1",
       "npm:pyodide@0.26.0"
     ]

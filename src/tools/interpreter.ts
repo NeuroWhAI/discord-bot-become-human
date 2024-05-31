@@ -20,6 +20,10 @@ export const metadata: FunctionDefinition = {
         items: { type: 'string' },
         description: 'The file or image IDs required to run code',
       },
+      output_file: {
+        type: 'string',
+        description: 'The output file name',
+      },
     },
     required: ['code'],
   },
@@ -29,7 +33,7 @@ export async function execute(arg: string, ctx: ToolContext): Promise<string> {
   let timeoutId: number | null = null;
 
   try {
-    const { code, file_ids } = JSON.parse(arg);
+    const { code, file_ids, output_file } = JSON.parse(arg);
 
     const files: { id: string; data: Uint8Array }[] = [];
     if (Array.isArray(file_ids)) {
@@ -75,6 +79,7 @@ export async function execute(arg: string, ctx: ToolContext): Promise<string> {
           cmd: 'execute',
           code,
           files,
+          outputFile: output_file,
         } satisfies WorkerMessage,
       );
 

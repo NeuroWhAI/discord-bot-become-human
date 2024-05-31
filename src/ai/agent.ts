@@ -1,5 +1,7 @@
 import { decodeBase64 } from 'std/encoding/base64.ts';
 import OpenAI from 'openai';
+// @deno-types="npm:@types/mime-types"
+import mime from 'mime-types';
 import { ChatMessage } from '../chat/chat-message.ts';
 import { ChatCompletionTool, getTool, ToolContext } from './tool.ts';
 
@@ -85,7 +87,7 @@ export class Agent {
 
   public async chat(
     newMessages: ChatMessage[],
-    imageCallback: (image: Uint8Array, format: string) => Promise<void>,
+    fileCallback: (file: Uint8Array, format: string) => Promise<void>,
   ): Promise<string> {
     // 새 대화 이력 추가.
     for (const msg of newMessages) {
@@ -235,32 +237,42 @@ export class Agent {
             content: toolRes,
           };
 
-          if (toolRes.startsWith('data:image/')) {
-            console.log(`# Tool response: (image)`);
+          if (toolRes.startsWith('data:')) {
+            console.log(`# Tool response: (file)`);
 
             try {
-              const imgData = toolRes.substring(toolRes.indexOf(',') + 1);
-              const imgFormat = /image\/(\w+);/g.exec(toolRes)?.[1] ?? 'png';
-              await imageCallback(decodeBase64(imgData), imgFormat);
+              const fileData = toolRes.substring(toolRes.indexOf(',') + 1);
+              const fileMime = /data:([\w\/]+);/g.exec(toolRes)?.[1] ??
+                'application/octet-stream';
+              const fileFormat = mime.extension(fileMime) || 'bin';
+              await fileCallback(decodeBase64(fileData), fileFormat);
 
-              const imgId = this.toolContext.fileStorage.setImageUrl(toolRes);
+              if (toolRes.startsWith('data:image')) {
+                const imgId = this.toolContext.fileStorage.setImageUrl(toolRes);
 
-              toolMessage.content =
-                `The image(ID: ${imgId}) has been successfully shared with users.` +
-                '\n(Do not print the ID.)';
+                toolMessage.content =
+                  `The image(ID: ${imgId}) has been successfully shared with users.` +
+                  '\n(Do not print the ID.)';
 
-              afterToolMessages.push({
-                role: 'user',
-                content: [
-                  {
-                    type: 'text',
-                    text: `assistant generated image (ID: ${imgId})`,
-                  },
-                  { type: 'image_url', image_url: { url: toolRes } },
-                ],
-              });
+                afterToolMessages.push({
+                  role: 'user',
+                  content: [
+                    {
+                      type: 'text',
+                      text: `assistant generated image (ID: ${imgId})`,
+                    },
+                    { type: 'image_url', image_url: { url: toolRes } },
+                  ],
+                });
+              } else {
+                const fileId = this.toolContext.fileStorage.setFileUrl(toolRes);
+
+                toolMessage.content =
+                  `The file(ID: ${fileId}) has been successfully shared with users.` +
+                  '\n(Do not print the ID. The file name has been changed to this ID.)';
+              }
             } catch (err) {
-              toolMessage.content = `Fail to share the image with users.\n${
+              toolMessage.content = `Fail to share the file with users.\n${
                 (err as Error).message
               }`;
             }

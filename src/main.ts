@@ -186,15 +186,15 @@ async function chat(channel: TextBasedChannel) {
   const respond = await agentManager.chat(
     channelId,
     messages,
-    async (img, ext) => {
+    async (file, ext) => {
       const stream = new ReadableStream<Uint8Array>({
         start(controller) {
-          controller.enqueue(img);
+          controller.enqueue(file);
           controller.close();
         },
       });
       await channel.send({
-        files: [{ attachment: stream, name: `image.${ext}` }],
+        files: [{ attachment: stream, name: `file.${ext}` }],
       });
     },
   );

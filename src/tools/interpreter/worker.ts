@@ -1,4 +1,7 @@
+import { encodeBase64 } from 'std/encoding/base64.ts';
 import { loadPyodide } from 'pyodide';
+// @deno-types="npm:@types/mime-types"
+import mime from 'mime-types';
 import { WorkerMessage, WorkerMessageExecute } from './worker-message.ts';
 
 self.addEventListener('message', async (evt) => {
@@ -42,6 +45,15 @@ async function runPython(data: WorkerMessageExecute) {
 
   await py.loadPackagesFromImports(code);
   const res = await py.runPythonAsync(code);
+
+  if (data.outputFile) {
+    const file = py.FS.readFile(data.outputFile);
+    if (file) {
+      const mimeType = mime.lookup(data.outputFile) ||
+        'application/octet-stream';
+      return `data:${mimeType};base64,${encodeBase64(file)}`;
+    }
+  }
 
   if (res != null) {
     const resText = JSON.stringify(res, null, 1);
