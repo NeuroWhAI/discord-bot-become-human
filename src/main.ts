@@ -184,9 +184,13 @@ async function makeChatMessageFrom(msg: Message): Promise<ChatMessage> {
       if (httpImageUrls.length < 2) {
         httpImageUrls.push(url);
       }
-    } else if (fileTypes.test(pathname)) {
-      fileUrls.push(url);
     } else {
+      const headRes = await fetch(url, { method: 'HEAD' });
+      const contentType = headRes.headers.get('content-type');
+      if (!contentType || !contentType.includes('text/html')) {
+        continue;
+      }
+
       const og = await getOGTags(url);
       let ogContent = `(URL Metadata) [${og.title}]`;
       if (og.description) {
