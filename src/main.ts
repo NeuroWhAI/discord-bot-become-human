@@ -8,6 +8,7 @@ import { AgentManager } from './ai/agent-manager.ts';
 import { TextBasedChannel } from 'discord.js';
 import { Message } from 'discord.js';
 import { MessageReaction } from 'discord.js';
+import { getOGTags } from 'opengraph';
 
 const chatBuffer = new ChatBuffer();
 const agentManager = new AgentManager();
@@ -73,7 +74,7 @@ client.on(Events.MessageCreate, async (msg) => {
     `[${msg.author.tag} — ${msg.createdAt.toLocaleTimeString()}]\n${msg.cleanContent}`,
   );
 
-  const chatMsg = makeChatMessageFrom(msg);
+  const chatMsg = await makeChatMessageFrom(msg);
 
   if (msg.reference) {
     const refMessages = await msg.channel.messages.fetch({
@@ -82,7 +83,7 @@ client.on(Events.MessageCreate, async (msg) => {
     });
     const refMsg = refMessages.first();
     if (refMsg) {
-      chatMsg.refMessage = makeChatMessageFrom(refMsg);
+      chatMsg.refMessage = await makeChatMessageFrom(refMsg);
     }
   }
 
@@ -146,7 +147,7 @@ client.on(Events.MessageCreate, async (msg) => {
   }
 });
 
-function makeChatMessageFrom(msg: Message): ChatMessage {
+async function makeChatMessageFrom(msg: Message): Promise<ChatMessage> {
   const emojiUrls: Set<string> = new Set();
   const emojiMatches = msg.content.matchAll(/<a?:\w+:(\d+)>/g);
   for (const match of emojiMatches) {
@@ -158,24 +159,63 @@ function makeChatMessageFrom(msg: Message): ChatMessage {
     }
   }
 
+  const imageTypes = /\.(png|jpeg|jpg|gif|webp)$/g;
+  const fileTypes = /\.(txt|md|csv|json|xml)$/g;
+
   const imageUrls = msg.attachments.map((attachment) => attachment.url).filter((
     url,
-  ) => /\.(png|jpeg|jpg|gif|webp)$/g.test(new URL(url).pathname)).slice(0, 4);
+  ) => imageTypes.test(new URL(url).pathname)).slice(0, 4);
 
   const stickerUrls = msg.stickers.map((s) => s.url).filter((url) =>
-    /\.(png|jpeg|jpg|gif|webp)$/g.test(new URL(url).pathname)
+    imageTypes.test(new URL(url).pathname)
   ).slice(0, 1);
 
   const fileUrls = msg.attachments.map((attachment) => attachment.url).filter((
     url,
-  ) => /\.(txt|md|csv|json|xml)$/g.test(new URL(url).pathname));
+  ) => fileTypes.test(new URL(url).pathname));
+
+  const httpImageUrls: string[] = [];
+  let msgContent = msg.cleanContent;
+
+  const httpUrls = msg.content.matchAll(/\bhttps?:\/\/\S+/g);
+  for (const [url] of httpUrls) {
+    const pathname = new URL(url).pathname;
+    if (imageTypes.test(pathname)) {
+      if (httpImageUrls.length < 2) {
+        httpImageUrls.push(url);
+      }
+    } else if (fileTypes.test(pathname)) {
+      fileUrls.push(url);
+    } else {
+      const og = await getOGTags(url);
+      let ogContent = `(URL Metadata) [${og.title}]`;
+      if (og.description) {
+        ogContent += ' ' + og.description;
+      }
+
+      if (og.image) {
+        const ogImage = typeof og.image === 'string'
+          ? og.image
+          : og.image.content;
+        if (ogImage && imageTypes.test(new URL(ogImage).pathname)) {
+          httpImageUrls.push(ogImage);
+        }
+      }
+
+      if (msgContent) {
+        msgContent += '\n\n' + ogContent;
+      } else {
+        msgContent = ogContent;
+      }
+    }
+  }
 
   return new ChatMessage({
     authorId: msg.author.tag,
     author: msg.member ? msg.member.displayName : msg.author.displayName,
-    content: msg.cleanContent,
+    content: msgContent,
     date: msg.createdAt,
-    imageUrls: [...emojiUrls, ...imageUrls, ...stickerUrls],
+    imageUrls: [...emojiUrls, ...imageUrls, ...stickerUrls, ...httpImageUrls],
     fileUrls,
   });
 }
