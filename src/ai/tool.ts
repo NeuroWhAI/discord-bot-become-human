@@ -1,3 +1,5 @@
+import { ChatDB } from '../db/chat-db.ts';
+
 export interface ObjectParameter {
   type: 'object';
   properties: Record<string, FunctionParameters>;
@@ -112,9 +114,18 @@ export class FileUrlStorage {
 }
 
 export class ToolContext {
+  constructor(chatDB: ChatDB) {
+    this._chatDB = chatDB;
+  }
+
   private _fileStorage: FileUrlStorage = new FileUrlStorage();
   public get fileStorage(): FileUrlStorage {
     return this._fileStorage;
+  }
+
+  private _chatDB: ChatDB;
+  public get chatDB(): ChatDB {
+    return this._chatDB;
   }
 }
 

@@ -27,6 +27,8 @@ export class Agent {
       role: 'system',
       content: chatPrompt,
     });
+
+    this.toolContext = new ToolContext(chatDB);
   }
 
   private readonly openai: OpenAI;
@@ -35,7 +37,7 @@ export class Agent {
   private readonly chatDB: ChatDB;
 
   private context: Context;
-  private readonly toolContext: ToolContext = new ToolContext();
+  private readonly toolContext: ToolContext;
 
   private incomingTextHistory: string = '';
   private incomingMessages: AgentMessage[] = [];
