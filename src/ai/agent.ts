@@ -6,6 +6,7 @@ import { ChatMessage } from '../chat/chat-message.ts';
 import { ChatCompletionTool, getTool, ToolContext } from './tool.ts';
 import { AgentMessage } from './message.ts';
 import { Context } from './context.ts';
+import { ChatDB } from '../db/chat-db.ts';
 
 export class Agent {
   constructor(
@@ -14,12 +15,12 @@ export class Agent {
     chatPrompt: string,
     summarizePrompt: string,
     tools: ChatCompletionTool[],
+    chatDB: ChatDB,
   ) {
     this.openai = openai;
     this.model = model;
-    this.chatPrompt = chatPrompt;
-    this.summarizePrompt = summarizePrompt;
     this.tools = tools;
+    this.chatDB = chatDB;
 
     this.context = new Context(openai, model, summarizePrompt);
     this.context.appendMessage({
@@ -30,9 +31,8 @@ export class Agent {
 
   private readonly openai: OpenAI;
   private readonly model: string;
-  private readonly chatPrompt: string;
-  private readonly summarizePrompt: string;
   private readonly tools: ChatCompletionTool[];
+  private readonly chatDB: ChatDB;
 
   private context: Context;
   private readonly toolContext: ToolContext = new ToolContext();
@@ -296,7 +296,10 @@ export class Agent {
 
       if (cmd === 'STOP' || cmd === 'SWITCH') {
         this.chatting = cmd === 'SWITCH';
-        await this.context.compress();
+        const summary = await this.context.compress();
+        this.chatDB.store(summary)
+          .then(() => console.log('# Summary stored'))
+          .catch((err) => console.log(err));
       } else if (cmd !== 'IDLE') {
         this.chatting = true;
       }
@@ -333,7 +336,10 @@ export class Agent {
     this.thinking = true;
 
     try {
-      await this.context.compress();
+      const summary = await this.context.compress();
+      this.chatDB.store(summary)
+        .then(() => console.log('# Summary stored'))
+        .catch((err) => console.log(err));
     } finally {
       this.thinking = false;
     }

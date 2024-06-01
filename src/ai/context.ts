@@ -47,7 +47,7 @@ export class Context {
     return ctx;
   }
 
-  public async compress() {
+  public async compress(): Promise<string> {
     const summary = await this.summarize(this.textHistory);
     const summaryContent =
       '--- Below is a summary of previous conversation ---\n\n' +
@@ -128,6 +128,8 @@ export class Context {
       content: summaryContent,
       name: 'summarizer',
     });
+
+    return summary;
   }
 
   private async summarize(content: string): Promise<string> {
