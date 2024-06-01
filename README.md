@@ -27,5 +27,6 @@ OpenAI 대화 모델을 적절히 사용하여 디스코드 채널에서 자연�
   - [x] 인터넷 검색. ([Tavily AI](https://tavily.com/))
   - [x] 이미지 생성 및 수정. ([Stability AI](https://platform.stability.ai/))
   - [x] 코드 실행. ([Pyodide](https://pyodide.org/en/stable/))
+  - [x] 이전 대화 검색. ([Chroma](https://www.trychroma.com/))
+- [x] 이전 대화들을 정리하여 임베딩 계산 후 DB에 저장.
 - [ ] 좀 더 똑똑하게 대화 참여 및 나가기.
-- [ ] 이전 대화들을 정리하여 임베딩 계산 후 메모리에 저장 및 필요시 조회.
