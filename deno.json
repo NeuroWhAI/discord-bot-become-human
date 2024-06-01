@@ -9,12 +9,14 @@
     "discord.js": "npm:discord.js@14.15.2",
     "openai": "npm:openai@4.47.1",
     "pyodide": "npm:pyodide@0.26.0",
-    "mime-types": "npm:mime-types@2.1.35"
+    "mime-types": "npm:mime-types@2.1.35",
+    "chromadb": "npm:chromadb@1.8.1"
   },
   "tasks": {
     "start": "deno run --allow-read --allow-write --allow-env --allow-net src/main.ts",
     "deploy": "deno run --allow-read --allow-env --allow-net src/deploy.ts",
-    "dev": "deno run --allow-read --allow-env --allow-net --watch src/main.ts"
+    "dev": "deno run --allow-read --allow-env --allow-net --watch src/main.ts",
+    "db": "chroma run --path ./chroma"
   },
   "lint": {
     "include": [
