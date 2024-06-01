@@ -247,7 +247,7 @@ async function chat(channel: TextBasedChannel) {
     console.log(
       `[assistant]\n${respond}`,
     );
-    await channel.send({ content: respond });
+    await sendMessage(channel, respond);
 
     const timeoutId = setTimeout(async () => {
       console.log('# Timeout');
@@ -255,6 +255,64 @@ async function chat(channel: TextBasedChannel) {
       await agentManager.stopChatting(channelId);
     }, 5 * 60 * 1000);
     chatTimeouts.set(channelId, timeoutId);
+  }
+}
+
+async function sendMessage(channel: TextBasedChannel, message: string) {
+  if (message.length < 2000) {
+    await channel.send({ content: message });
+    return;
+  }
+
+  const chunks: string[] = [];
+  const lines = message.split('\n');
+  let currBlockHead = '';
+  for (const line of lines) {
+    if (currBlockHead) {
+      if (chunks[chunks.length - 1].length + line.length + 1 >= 1800) {
+        if (chunks[chunks.length - 1].length + 4 < 2000) {
+          chunks[chunks.length - 1] += '\n```';
+        }
+        chunks.push(currBlockHead);
+      }
+
+      chunks[chunks.length - 1] += '\n' + line;
+
+      if (line.startsWith('```')) {
+        currBlockHead = '';
+      }
+    } else if (line.startsWith('```')) {
+      currBlockHead = line;
+      chunks.push(line);
+    } else {
+      chunks.push(line);
+    }
+  }
+
+  let needWait = false;
+  let buffer = '';
+  for (const chunk of chunks) {
+    if (buffer && buffer.length + chunk.length + 1 >= 1800) {
+      if (needWait) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+
+      await channel.send({ content: buffer });
+      buffer = '';
+      needWait = true;
+    }
+
+    if (buffer) {
+      buffer += '\n' + chunk;
+    } else {
+      buffer = chunk;
+    }
+  }
+  if (buffer) {
+    if (needWait) {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+    await channel.send({ content: buffer });
   }
 }
 
