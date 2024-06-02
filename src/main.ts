@@ -185,31 +185,36 @@ async function makeChatMessageFrom(msg: Message): Promise<ChatMessage> {
         httpImageUrls.push(url);
       }
     } else {
-      const headRes = await fetch(url, { method: 'HEAD' });
-      const contentType = headRes.headers.get('content-type');
-      if (!contentType || !contentType.includes('text/html')) {
-        continue;
-      }
-
-      const og = await getOGTags(url);
-      let ogContent = `(URL Metadata) [${og.title}]`;
-      if (og.description) {
-        ogContent += ' ' + og.description;
-      }
-
-      if (og.image) {
-        const ogImage = typeof og.image === 'string'
-          ? og.image
-          : og.image.content;
-        if (ogImage && imageTypes.test(new URL(ogImage).pathname)) {
-          httpImageUrls.push(ogImage);
+      try {
+        const headRes = await fetch(url, { method: 'HEAD' });
+        const contentType = headRes.headers.get('content-type');
+        if (!contentType || !contentType.includes('text/html')) {
+          continue;
         }
-      }
 
-      if (msgContent) {
-        msgContent += '\n\n' + ogContent;
-      } else {
-        msgContent = ogContent;
+        const og = await getOGTags(url);
+        let ogContent = `(URL Metadata) [${og.title}]`;
+        if (og.description) {
+          ogContent += ' ' + og.description;
+        }
+
+        if (og.image) {
+          const ogImage = typeof og.image === 'string'
+            ? og.image
+            : og.image.content;
+          if (ogImage && imageTypes.test(new URL(ogImage).pathname)) {
+            httpImageUrls.push(ogImage);
+          }
+        }
+
+        if (msgContent) {
+          msgContent += '\n\n' + ogContent;
+        } else {
+          msgContent = ogContent;
+        }
+      } catch (err) {
+        console.log(`Failed to get og tags from ${url}`);
+        console.log((err as Error).stack);
       }
     }
   }
