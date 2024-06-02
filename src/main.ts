@@ -117,7 +117,7 @@ client.on(Events.MessageCreate, async (msg) => {
   if (botMentioned) {
     const loading = msg.react('⏳');
     await chat(msg.channel);
-    loading.then((emoji) => emoji.users.remove());
+    loading.then((emoji) => emoji.users.remove()).catch(() => {});
   } else {
     const agentChatting = agentManager.checkChatting(channelId);
     const triggerTime = agentChatting
@@ -140,7 +140,7 @@ client.on(Events.MessageCreate, async (msg) => {
         lookingEmoji?.then((emoji) => emoji.users.remove()).catch(() => {});
         const loading = msg.react('⏳');
         await chat(msg.channel);
-        loading.then((emoji) => emoji.users.remove());
+        loading.then((emoji) => emoji.users.remove()).catch(() => {});
       }
     }, triggerTime);
     chatTriggers.set(channelId, [triggerId, lookingEmoji]);
