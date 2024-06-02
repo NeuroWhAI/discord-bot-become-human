@@ -302,8 +302,13 @@ export class Agent {
         `# Context cnt: ${this.context.size}, Total tokens: ${totalTokens}`,
       );
 
-      if (cmd === 'STOP' || cmd === 'SWITCH') {
-        this.chatting = cmd === 'SWITCH';
+      if (cmd === 'STOP' || cmd === 'SWITCH' || totalTokens > 8000) {
+        if (cmd === 'STOP') {
+          this.chatting = false;
+        } else if (cmd === 'SWITCH') {
+          this.chatting = true;
+        }
+
         const summary = await this.context.compress();
         this.chatDB.store(summary)
           .then(() => console.log('# Summary stored'))
