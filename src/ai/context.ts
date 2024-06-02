@@ -59,8 +59,8 @@ export class Context {
 
     // 토큰 사용량 절약을 위해 최근 대화 및 요약만 남김.
     if (
-      this.prevSummaryIndices.length > 3 ||
-      (this.prevSummaryIndices.length > 0 && this.messages.length > 64)
+      this.prevSummaryIndices.length > 1 ||
+      (this.prevSummaryIndices.length > 0 && this.messages.length > 32)
     ) {
       this.messages = [
         this.messages[0], // System message.
@@ -73,10 +73,10 @@ export class Context {
     }
 
     // 토큰 사용량 절약을 위해 좀 이전의 메시지 내 이미지들은 삭제.
-    if (this.prevSummaryIndices.length > 0 || this.messages.length > 64) {
+    if (this.prevSummaryIndices.length > 0 || this.messages.length > 32) {
       const expiredEndIndex = this.prevSummaryIndices.length > 0
         ? this.prevSummaryIndices[this.prevSummaryIndices.length - 1]
-        : this.messages.length;
+        : Math.floor(this.messages.length * 0.7);
 
       for (let i = 1; i < expiredEndIndex; i++) {
         const msg = this.messages[i];

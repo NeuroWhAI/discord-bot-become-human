@@ -166,6 +166,7 @@ export class Agent {
         presence_penalty: 0.1,
         frequency_penalty: 0.1,
       });
+      let totalTokens = completion.usage?.total_tokens ?? 0;
       const res = completion.choices[0].message;
       let resContent = res.content?.trim() ?? '';
 
@@ -259,6 +260,7 @@ export class Agent {
           presence_penalty: 0.1,
           frequency_penalty: 0.1,
         });
+        totalTokens = completion2.usage?.total_tokens ?? 0;
         const res2 = completion2.choices[0].message;
         resContent = res2.content?.trim() ?? '';
 
@@ -296,17 +298,21 @@ export class Agent {
         });
       }
 
+      console.log(
+        `# Context cnt: ${this.context.size}, Total tokens: ${totalTokens}`,
+      );
+
       if (cmd === 'STOP' || cmd === 'SWITCH') {
         this.chatting = cmd === 'SWITCH';
         const summary = await this.context.compress();
         this.chatDB.store(summary)
           .then(() => console.log('# Summary stored'))
           .catch((err) => console.log(err));
+
+        console.log(`# Compressed context cnt: ${this.context.size}`);
       } else if (cmd !== 'IDLE') {
         this.chatting = true;
       }
-
-      console.log(`# Context cnt: ${this.context.size}`);
 
       return resContent;
     } catch (err) {
@@ -342,6 +348,8 @@ export class Agent {
       this.chatDB.store(summary)
         .then(() => console.log('# Summary stored'))
         .catch((err) => console.log(err));
+
+      console.log(`# Compressed context cnt: ${this.context.size}`);
     } finally {
       this.thinking = false;
     }
