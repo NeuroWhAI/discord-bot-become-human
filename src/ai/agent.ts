@@ -265,11 +265,13 @@ export class Agent {
         afterToolMessages.forEach((msg) => this.context.appendMessage(msg));
       }
 
-      let cmd: '' | 'IDLE' | 'STOP' = '';
+      let cmd: '' | 'IDLE' | 'STOP' | 'SWITCH' = '';
       if (resContent === 'IDLE') {
         cmd = 'IDLE';
       } else if (resContent.endsWith('STOP')) {
         cmd = 'STOP';
+      } else if (resContent.endsWith('SWITCH')) {
+        cmd = 'SWITCH';
       }
 
       if (cmd) {
@@ -281,6 +283,8 @@ export class Agent {
       } else {
         if (cmd === 'STOP') {
           resContent = resContent.substring(0, resContent.length - 4);
+        } else if (cmd === 'SWITCH') {
+          resContent = resContent.substring(0, resContent.length - 7);
         }
 
         this.context.appendHistory(
@@ -292,8 +296,8 @@ export class Agent {
         });
       }
 
-      if (cmd === 'STOP') {
-        this.chatting = false;
+      if (cmd === 'STOP' || cmd === 'SWITCH') {
+        this.chatting = cmd === 'SWITCH';
         const summary = await this.context.compress();
         this.chatDB.store(summary)
           .then(() => console.log('# Summary stored'))
