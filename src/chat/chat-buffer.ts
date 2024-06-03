@@ -35,6 +35,12 @@ export class ChatBuffer {
 
         return;
       }
+
+      // 마지막 메시지로부터 시간이 오래 지났다면 이전 기록 초기화.
+      if (elapsedTime > 6 * 24 * 3600 * 1000) {
+        buffer = [];
+        this.bufferTable.set(channelId, buffer);
+      }
     }
 
     buffer.push(message);
