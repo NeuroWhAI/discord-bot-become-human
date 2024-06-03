@@ -5,14 +5,14 @@
       "npm:@types/mime-types": "npm:@types/mime-types@2.1.4",
       "npm:@types/node": "npm:@types/node@18.16.19",
       "npm:chromadb@1.8.1": "npm:chromadb@1.8.1_openai@4.47.1",
-      "npm:discord.js@14.15.2": "npm:discord.js@14.15.2",
+      "npm:discord.js@14.15.3": "npm:discord.js@14.15.3",
       "npm:mime-types@2.1.35": "npm:mime-types@2.1.35",
       "npm:openai@4.47.1": "npm:openai@4.47.1",
       "npm:pyodide@0.26.0": "npm:pyodide@0.26.0"
     },
     "npm": {
-      "@discordjs/builders@1.8.1": {
-        "integrity": "sha512-GkF+HM01FHy+NSoTaUPR8z44otfQgJ1AIsRxclYGUZDyUbdZEFyD/5QVv2Y1Flx6M+B0bQLzg2M9CJv5lGTqpA==",
+      "@discordjs/builders@1.8.2": {
+        "integrity": "sha512-6wvG3QaCjtMu0xnle4SoOIeFB4y6fKMN6WZfy3BMKJdQQtPLik8KGzDwBVL/+wTtcE/ZlFjgEk74GublyEVZ7g==",
         "dependencies": {
           "@discordjs/formatters": "@discordjs/formatters@0.4.0",
           "@discordjs/util": "@discordjs/util@1.1.0",
@@ -55,8 +55,8 @@
         "integrity": "sha512-IndcI5hzlNZ7GS96RV3Xw1R2kaDuXEp7tRIy/KlhidpN/BQ1qh1NZt3377dMLTa44xDUNKT7hnXkA/oUAzD/lg==",
         "dependencies": {}
       },
-      "@discordjs/ws@1.1.0": {
-        "integrity": "sha512-O97DIeSvfNTn5wz5vaER6ciyUsr7nOqSEtsLoMhhIgeFkhnxLRqSr00/Fpq2/ppLgjDGLbQCDzIK7ilGoB/M7A==",
+      "@discordjs/ws@1.1.1": {
+        "integrity": "sha512-PZ+vLpxGCRtmr2RMkqh8Zp+BenUaJqlS6xhgWKEZcgC/vfHLEzpHtKkB0sl3nZWpwtcKk6YWy+pU3okL2I97FA==",
         "dependencies": {
           "@discordjs/collection": "@discordjs/collection@2.1.0",
           "@discordjs/rest": "@discordjs/rest@2.3.0",
@@ -175,15 +175,15 @@
         "integrity": "sha512-urGGYeWtWNYMKnYlZnOnDHm8fVRffQs3U0SpE8RHeiuLKb/u92APS8HoQnPTFbnXmY1vVnXjXO4dOxcAn3J+DA==",
         "dependencies": {}
       },
-      "discord.js@14.15.2": {
-        "integrity": "sha512-wGD37YCaTUNprtpqMIRuNiswwsvSWXrHykBSm2SAosoTYut0VUDj9yo9t4iLtMKvuhI49zYkvKc2TNdzdvpJhg==",
+      "discord.js@14.15.3": {
+        "integrity": "sha512-/UJDQO10VuU6wQPglA4kz2bw2ngeeSbogiIPx/TsnctfzV/tNf+q+i1HlgtX1OGpeOBpJH9erZQNO5oRM2uAtQ==",
         "dependencies": {
-          "@discordjs/builders": "@discordjs/builders@1.8.1",
+          "@discordjs/builders": "@discordjs/builders@1.8.2",
           "@discordjs/collection": "@discordjs/collection@1.5.3",
           "@discordjs/formatters": "@discordjs/formatters@0.4.0",
           "@discordjs/rest": "@discordjs/rest@2.3.0",
           "@discordjs/util": "@discordjs/util@1.1.0",
-          "@discordjs/ws": "@discordjs/ws@1.1.0",
+          "@discordjs/ws": "@discordjs/ws@1.1.1",
           "@sapphire/snowflake": "@sapphire/snowflake@3.5.3",
           "discord-api-types": "discord-api-types@0.37.83",
           "fast-deep-equal": "fast-deep-equal@3.1.3",
@@ -396,7 +396,7 @@
   "workspace": {
     "dependencies": [
       "npm:chromadb@1.8.1",
-      "npm:discord.js@14.15.2",
+      "npm:discord.js@14.15.3",
       "npm:mime-types@2.1.35",
       "npm:openai@4.47.1",
       "npm:pyodide@0.26.0"
