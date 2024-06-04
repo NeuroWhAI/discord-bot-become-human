@@ -148,6 +148,8 @@ client.on(Events.MessageCreate, async (msg) => {
 });
 
 async function makeChatMessageFrom(msg: Message): Promise<ChatMessage> {
+  const maxImageSize = 20 * 1024 * 1024 - 100;
+
   const emojiUrls: Set<string> = new Set();
   const emojiMatches = msg.content.matchAll(/<a?:\w+:(\d+)>/g);
   for (const match of emojiMatches) {
@@ -162,9 +164,10 @@ async function makeChatMessageFrom(msg: Message): Promise<ChatMessage> {
   const imageTypes = /\.(png|jpeg|jpg|gif|webp)$/g;
   const fileTypes = /\.(txt|md|csv|json|xml)$/g;
 
-  const imageUrls = msg.attachments.map((attachment) => attachment.url).filter((
-    url,
-  ) => imageTypes.test(new URL(url).pathname)).slice(0, 4);
+  const imageUrls = msg.attachments
+    .map((attachment) => attachment.url)
+    .filter((url) => imageTypes.test(new URL(url).pathname))
+    .slice(0, 4);
 
   const stickerUrls = msg.stickers.map((s) => s.url).filter((url) =>
     imageTypes.test(new URL(url).pathname)
@@ -216,6 +219,40 @@ async function makeChatMessageFrom(msg: Message): Promise<ChatMessage> {
         console.log(`Failed to get og tags from ${url}`);
         console.log((err as Error).stack);
       }
+    }
+  }
+
+  let bigImageRemoved = false;
+  const sizeCheckTargets = [imageUrls, httpImageUrls];
+  for (const urls of sizeCheckTargets) {
+    for (let i = 0; i < urls.length; i++) {
+      const url = urls[i];
+      let imgSize = 0;
+
+      try {
+        const headRes = await fetch(url, { method: 'HEAD' });
+        imgSize = parseInt(
+          headRes.headers.get('content-length') ?? '0',
+        );
+        if (imgSize < maxImageSize) {
+          continue;
+        }
+      } catch (err) {
+        console.log(`# Failed to fetch image ${url}\n${err}`);
+      }
+
+      urls.splice(i, 1);
+      i -= 1;
+
+      bigImageRemoved = true;
+    }
+  }
+
+  if (bigImageRemoved) {
+    if (msgContent) {
+      msgContent += '\n\n' + '(image too large)';
+    } else {
+      msgContent = '(image too large)';
     }
   }
 
