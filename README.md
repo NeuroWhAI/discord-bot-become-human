@@ -1,8 +1,8 @@
 # Discord Bot Become Human
 
-🚧 Work in progress 🚧
-
 OpenAI 대화 모델을 적절히 사용하여 디스코드 채널에서 자연스럽게 사람들의 대화에 참여하는 봇.
+
+![banner](assets/banner.png)
 
 **Multi-User Conversation**  
 ![demo](assets/demo.png)
@@ -10,12 +10,15 @@ OpenAI 대화 모델을 적절히 사용하여 디스코드 채널에서 자연�
 **Reference message & Vision**  
 ![demo2](assets/demo2.png)
 
-**Function Calls**  
+**Function Calls** (Weather, Search, Image Gen/Edit, Interpreter, Query DB)  
 ![demo3](assets/demo3.png)
 
 ## Features
 
-- [x] 정해진 채널에서 다자간 대화(텍스트, 이미지(첨부, 이모지, 스티커)) 수집.
+- [x] 정해진 채널에서 다자간 대화 수집.
+  - 수집 텍스트 : 작성자, 작성일, 내용, og:title/description
+  - 수집 이미지 : 첨부, 이모지, 스티커, HTTP URL, og:image
+  - 수집 파일(이미지 외) : 첨부
 - [x] 채널이 일정시간 이상 조용하거나 봇이 멘션되면 수집한 맥락을 가지고 대화 시작.
 - [x] 대화 시작 이후에는 멘션이 없어도 일정시간 뒤 응답.
 - [x] 응답을 할지 말지 판단.
@@ -30,3 +33,21 @@ OpenAI 대화 모델을 적절히 사용하여 디스코드 채널에서 자연�
   - [x] 이전 대화 검색. ([Chroma](https://www.trychroma.com/))
 - [x] 이전 대화들을 정리하여 임베딩 계산 후 DB에 저장.
 - [ ] 좀 더 똑똑하게 대화 참여 및 나가기.
+
+## Config
+
+### .env
+
+```env
+CLIENT_ID={Discord App ID}
+DISCORD_TOKEN={Discord Bot Token}
+CHANNEL_WHITELIST={Discord Channel IDs : e.g. 321545304510012344,321545304510012345}
+OPENAI_API_KEY={OpenAI API Key}
+OPENAI_CHAT_MODEL={e.g. gpt-4o}
+OPENAI_EMBEDDING_MODEL={e.g. text-embedding-3-large}
+CHROMA_DB_URL={e.g. http://localhost:8000}
+
+WEATHER_BIT_API_KEY={Weatherbit API Key}
+TAVILY_API_KEY={Tavily API Key}
+STABILITY_API_KEY={Stability API Key}
+```
