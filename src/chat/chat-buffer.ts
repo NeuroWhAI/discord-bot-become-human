@@ -11,13 +11,14 @@ export class ChatBuffer {
     }
 
     if (buffer.length > 0) {
+      const currentTime = message.date.getTime();
       const latestMsg = buffer[buffer.length - 1];
-      const elapsedTime = message.date.getTime() - latestMsg.date.getTime();
+      const elapsedTime = currentTime - latestMsg.date.getTime();
 
       // 하나로 합칠 수 있는 메시지는 합침.
       if (
         latestMsg.authorId === message.authorId &&
-        elapsedTime < 30 * 1000
+        elapsedTime < 60 * 1000
       ) {
         if (latestMsg.content) {
           latestMsg.content = `${latestMsg.content}\n${message.content}`;
@@ -36,10 +37,15 @@ export class ChatBuffer {
         return;
       }
 
-      // 마지막 메시지로부터 시간이 오래 지났다면 이전 기록 초기화.
-      if (elapsedTime > 6 * 24 * 3600 * 1000) {
-        buffer = [];
-        this.bufferTable.set(channelId, buffer);
+      // 오래된 기록은 삭제.
+      // 더 오래된 기록까지 보관하게 되면 파일 URL이 만료되는 문제도 있음.
+      const longTime = 6 * 24 * 3600 * 1000;
+      for (let i = buffer.length - 1; i >= 0; i--) {
+        const msg = buffer[i];
+        if (currentTime - msg.date.getTime() > longTime) {
+          buffer.splice(0, i + 1);
+          break;
+        }
       }
     }
 
