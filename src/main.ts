@@ -359,3 +359,13 @@ async function sendMessage(channel: TextBasedChannel, message: string) {
 }
 
 client.login(env.DISCORD_TOKEN);
+
+self.addEventListener('unhandledrejection', (event) => {
+  console.error('Unhandled promise rejection:', event.reason);
+  event.preventDefault();
+});
+
+self.addEventListener('error', (event) => {
+  console.error('Uncaught error:', event.error);
+  event.preventDefault();
+});
