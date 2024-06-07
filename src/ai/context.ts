@@ -148,7 +148,7 @@ export class Context {
         ],
         temperature: 0.5,
         top_p: 0.5,
-      });
+      }, { timeout: 20000 });
       const res = completion.choices[0].message;
       const resContent = res.content?.trim() ?? '';
 

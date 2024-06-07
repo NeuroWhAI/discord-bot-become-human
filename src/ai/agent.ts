@@ -144,6 +144,10 @@ export class Agent {
       this.processChatMessage(msg);
     }
 
+    console.log(
+      `# Incoming messages cnt: ${this.incomingMessages.length} + ${newMessages.length}`,
+    );
+
     if (this.thinking) {
       return '';
     }
@@ -165,7 +169,10 @@ export class Agent {
         tool_choice: 'auto',
         presence_penalty: 0.1,
         frequency_penalty: 0.1,
-      });
+      }, { timeout: 20000 });
+
+      console.log(`# Completion:\n` + JSON.stringify(completion));
+
       let totalTokens = completion.usage?.total_tokens ?? 0;
       const res = completion.choices[0].message;
       let resContent = res.content?.trim() ?? '';
@@ -259,7 +266,10 @@ export class Agent {
           top_p: 0.5,
           presence_penalty: 0.1,
           frequency_penalty: 0.1,
-        });
+        }, { timeout: 20000 });
+
+        console.log(`# Completion:\n` + JSON.stringify(completion2));
+
         totalTokens = completion2.usage?.total_tokens ?? 0;
         const res2 = completion2.choices[0].message;
         resContent = res2.content?.trim() ?? '';
