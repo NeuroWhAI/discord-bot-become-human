@@ -21,6 +21,14 @@ export class AgentManager {
   private readonly chatDBs: Map<string, ChatDB> = new Map();
   private readonly tools: ChatCompletionTool[];
 
+  private _agentName: string = 'assistant';
+  public get agentName(): string {
+    return this._agentName;
+  }
+  public set agentName(v: string) {
+    this._agentName = v;
+  }
+
   public async chat(
     channelId: string,
     newMessages: ChatMessage[],
@@ -38,8 +46,8 @@ export class AgentManager {
       agent = new Agent(
         openai,
         env.OPENAI_CHAT_MODEL,
-        chatPrompt.trim(),
-        summarizePrompt.trim(),
+        this.interpolatePrompt(chatPrompt.trim()),
+        this.interpolatePrompt(summarizePrompt.trim()),
         this.tools,
         chatDB,
       );
@@ -63,5 +71,9 @@ export class AgentManager {
     if (!agent) return;
     agent.chatting = false;
     await agent.compressContext();
+  }
+
+  private interpolatePrompt(prompt: string) {
+    return prompt.replaceAll(/\${NAME}/g, this.agentName);
   }
 }

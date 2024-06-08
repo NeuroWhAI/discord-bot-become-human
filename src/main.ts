@@ -45,7 +45,8 @@ for (const file of Deno.readDirSync('src/commands')) {
 }
 
 client.once(Events.ClientReady, (c) => {
-  console.log(`# Logged in as ${c.user.tag}`);
+  agentManager.agentName = c.user.displayName;
+  console.log(`# Logged in as ${c.user.displayName}`);
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
