@@ -140,6 +140,7 @@ export class Agent {
     newMessages: ChatMessage[],
     fileCallback: (file: Uint8Array, format: string) => Promise<void>,
   ): Promise<string> {
+    console.log(`# debug: Process ${newMessages.length} new messages`);
     for (const msg of newMessages) {
       this.processChatMessage(msg);
     }
