@@ -76,7 +76,6 @@ client.on(Events.MessageCreate, async (msg) => {
   );
 
   const chatMsg = await makeChatMessageFrom(msg);
-  console.log(`# debug: Make chat message`);
 
   if (msg.reference) {
     const refMessages = await msg.channel.messages.fetch({
@@ -94,10 +93,7 @@ client.on(Events.MessageCreate, async (msg) => {
     chatMsg,
   );
 
-  console.log(`# debug: Append chat buffer: ${channelId}`);
-
   if (msg.author.bot) {
-    console.log(`# debug: Ignore bot message`);
     return;
   }
 
@@ -118,9 +114,6 @@ client.on(Events.MessageCreate, async (msg) => {
 
   const botMentioned = msg.mentions.users.some((user) =>
     user.id === botUser.id
-  );
-  console.log(
-    `# debug: ${botMentioned ? 'Bot mentioned' : 'Bot not mentioned'}`,
   );
   if (botMentioned) {
     const loading = msg.react('⏳');
@@ -305,8 +298,6 @@ async function chat(channel: TextBasedChannel) {
       await agentManager.stopChatting(channelId);
     }, 5 * 60 * 1000);
     chatTimeouts.set(channelId, timeoutId);
-  } else {
-    console.log(`# debug: No Respond: ${respond}`);
   }
 }
 
