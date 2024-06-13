@@ -183,7 +183,7 @@ async function generateWithReplicate(
         guidance_scale: 6,
         negative_prompt,
         style_selections: style,
-        performance_selection: 'Quality',
+        performance_selection: 'Speed',
         aspect_ratios_selection: numberRatio,
       },
     },
