@@ -70,7 +70,7 @@ export async function execute(arg: string, _ctx: ToolContext): Promise<string> {
       arg,
     );
     const formData = new FormData();
-    formData.append('model', 'sd3');
+    formData.append('model', 'sd3-large-turbo');
     formData.append('prompt', prompt);
     if (aspect_ratio) {
       formData.append('aspect_ratio', aspect_ratio);
