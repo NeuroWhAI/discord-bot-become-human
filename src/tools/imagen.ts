@@ -22,7 +22,7 @@ export const metadata: FunctionDefinition = {
       prompt: {
         type: 'string',
         description:
-          'Things to include in the output image. in English. e.g. 1 girl, blue hair, playing game',
+          'Very short(mainly nouns or adjectives) lots of English words(not complete sentences) to include in the output image. with great detail and impressiveness through imagination and creativity. Format: Subject, Settings, Actions, Context, Environment, Lighting, Artist, Styles, Medium, Type, Color Scheme, Computer Graphics, Quality, and more. e.g. 1 girl, playing game, blue hair',
       },
       aspect_ratio: {
         type: 'string',
