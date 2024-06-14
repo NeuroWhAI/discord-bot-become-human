@@ -10,8 +10,7 @@
     "openai": "npm:openai@4.47.1",
     "pyodide": "npm:pyodide@0.26.0",
     "mime-types": "npm:mime-types@2.1.35",
-    "chromadb": "npm:chromadb@1.8.1",
-    "replicate": "npm:replicate@0.30.2"
+    "chromadb": "npm:chromadb@1.8.1"
   },
   "tasks": {
     "start": "deno run --allow-read --allow-write --allow-env --allow-net src/main.ts",
