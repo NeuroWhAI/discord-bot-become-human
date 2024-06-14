@@ -6,12 +6,7 @@ import { load as loadEnv } from 'std/dotenv/mod.ts';
 const env = await loadEnv();
 
 import { encodeBase64 } from 'std/encoding/base64.ts';
-import Replicate from 'replicate';
 import { FunctionDefinition, ToolContext } from '../ai/tool.ts';
-
-const replicate = new Replicate({
-  auth: env.REPLICATE_API_KEY,
-});
 
 export const metadata: FunctionDefinition = {
   name: 'generate_one_image',
@@ -72,8 +67,11 @@ export async function execute(arg: string, _ctx: ToolContext): Promise<string> {
       arg,
     );
 
-    if (style_preset === 'anime' || style_preset === 'digital-art') {
-      return await generateWithReplicate(
+    if (
+      style_preset === 'anime' || style_preset === 'digital-art' ||
+      style_preset === 'fantasy-art'
+    ) {
+      return await generateWithRunpod(
         prompt,
         aspect_ratio,
         negative_prompt,
@@ -142,7 +140,7 @@ async function generateWithStability(
   return `data:image/png;base64,${encodeBase64(buffer)}`;
 }
 
-async function generateWithReplicate(
+async function generateWithRunpod(
   prompt: string,
   aspect_ratio: string,
   negative_prompt: string,
@@ -165,38 +163,52 @@ async function generateWithReplicate(
     ? defaultNegativePrompt + ', ' + negative_prompt
     : defaultNegativePrompt;
 
-  let style = 'Fooocus V2,Fooocus Masterpiece';
+  const style = ['Fooocus V2', 'Fooocus Masterpiece'];
   if (style_preset === 'anime') {
-    style += ',SAI Anime';
+    style.push('SAI Anime');
   } else if (style_preset === 'digital-art') {
-    style += ',SAI Digital Art';
+    style.push('SAI Digital Art');
+  } else if (style_preset === 'fantasy-art') {
+    style.push('SAI Fantasy Art');
   }
 
-  const output = await replicate.run(
-    'konieshadow/fooocus-api-anime:a750658f54c4f8bec1c8b0e352ce2666c22f2f919d391688ff4fc16e48b3a28f',
+  const res = await fetch(
+    `https://api.runpod.ai/v2/${env.RUNPOD_ANIME_IMAGEN_ENDPOINT_ID}/runsync`,
     {
-      input: {
-        prompt,
-        image_number: 1,
-        image_seed: -1,
-        sharpness: 2,
-        guidance_scale: 6,
-        negative_prompt,
-        style_selections: style,
-        performance_selection: 'Speed',
-        aspect_ratios_selection: numberRatio,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${env.RUNPOD_API_KEY}`,
       },
+      body: JSON.stringify({
+        input: {
+          api_name: 'txt2img',
+          require_base64: true,
+          prompt,
+          image_number: 1,
+          image_seed: -1,
+          sharpness: 2,
+          guidance_scale: 6,
+          negative_prompt,
+          style_selections: style,
+          performance_selection: 'Speed',
+          aspect_ratios_selection: numberRatio,
+        },
+      }),
     },
   );
-  if (!('0' in output) || typeof output[0] !== 'string') {
-    return 'No image generated';
-  }
-
-  const res = await fetch(output[0]);
   if (!res.ok) {
     return `HTTP error! Status: ${res.status}`;
   }
 
-  const buffer = await res.arrayBuffer();
-  return `data:image/png;base64,${encodeBase64(buffer)}`;
+  const genRes = await res.json();
+  if (genRes.status !== 'COMPLETED') {
+    return `Failed to generate image: ${genRes.status}`;
+  }
+
+  if (!genRes.output?.length) {
+    return `No output images found!`;
+  }
+
+  return `data:image/png;base64,${genRes.output[0].base64}`;
 }
