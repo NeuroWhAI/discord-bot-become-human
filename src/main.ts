@@ -273,6 +273,7 @@ async function chat(channel: TextBasedChannel) {
   const respond = await agentManager.chat(
     channelId,
     messages,
+    (msg) => sendMessage(channel, msg),
     async (file, ext) => {
       const stream = new ReadableStream<Uint8Array>({
         start(controller) {

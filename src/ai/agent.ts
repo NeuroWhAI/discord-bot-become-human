@@ -138,6 +138,7 @@ export class Agent {
 
   public async chat(
     newMessages: ChatMessage[],
+    intermMsgCallback: (msg: string) => Promise<void>,
     fileCallback: (file: Uint8Array, format: string) => Promise<void>,
   ): Promise<string> {
     for (const msg of newMessages) {
@@ -179,6 +180,10 @@ export class Agent {
 
       const toolCalls = res.tool_calls;
       if (toolCalls) {
+        if (resContent) {
+          await intermMsgCallback(resContent);
+        }
+
         this.context.appendMessage({
           role: res.role,
           content: res.content ?? '',

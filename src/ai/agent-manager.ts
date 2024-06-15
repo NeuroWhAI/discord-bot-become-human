@@ -32,6 +32,7 @@ export class AgentManager {
   public async chat(
     channelId: string,
     newMessages: ChatMessage[],
+    intermMsgCallback: (msg: string) => Promise<void>,
     fileCallback: (file: Uint8Array, format: string) => Promise<void>,
   ): Promise<string> {
     let agent = this.agents.get(channelId);
@@ -56,7 +57,7 @@ export class AgentManager {
       console.log(`# Create new ${env.OPENAI_CHAT_MODEL} agent`);
     }
 
-    const res = await agent.chat(newMessages, fileCallback);
+    const res = await agent.chat(newMessages, intermMsgCallback, fileCallback);
     return res;
   }
 
