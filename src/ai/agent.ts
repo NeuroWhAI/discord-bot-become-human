@@ -154,9 +154,9 @@ export class Agent {
     }
     this.thinking = true;
 
-    this.flushChatMessages();
-
     const backupContext = this.context.clone();
+
+    this.flushChatMessages();
 
     try {
       const completion = await this.openai.chat.completions.create({
