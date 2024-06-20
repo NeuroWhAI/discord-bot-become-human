@@ -59,6 +59,7 @@ export class Agent {
       for (const imgUrl of msg.imageUrls) {
         const id = this.toolContext.fileStorage.setImageUrl(imgUrl);
         text += `\n- ${id}`;
+        console.log(`# Image ${id}: ${imgUrl}`);
       }
     }
     if (msg.fileUrls.length > 0) {
@@ -66,6 +67,7 @@ export class Agent {
       for (const fileUrl of msg.fileUrls) {
         const id = this.toolContext.fileStorage.setFileUrl(fileUrl);
         text += `\n- ${id}`;
+        console.log(`# File ${id}: ${fileUrl}`);
       }
     }
 
@@ -80,6 +82,7 @@ export class Agent {
         for (const imgUrl of refMsg.imageUrls) {
           const id = this.toolContext.fileStorage.setImageUrl(imgUrl);
           refText += `\n- ${id}`;
+          console.log(`# Image ${id}: ${imgUrl}`);
         }
       }
       if (refMsg.fileUrls.length > 0) {
@@ -87,6 +90,7 @@ export class Agent {
         for (const fileUrl of refMsg.fileUrls) {
           const id = this.toolContext.fileStorage.setFileUrl(fileUrl);
           refText += `\n- ${id}`;
+          console.log(`# File ${id}: ${fileUrl}`);
         }
       }
 
