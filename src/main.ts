@@ -188,6 +188,24 @@ async function makeChatMessageFrom(msg: Message): Promise<ChatMessage> {
       if (httpImageUrls.length < 2) {
         httpImageUrls.push(url);
       }
+    } else if (url.startsWith('https://discord.com/channels/')) {
+      const match = url.match(
+        /^https:\/\/discord.com\/channels\/(\d+)\/(\d+)\/(\d+)/,
+      );
+      if (match) {
+        const [_, guildId, channelId, messageId] = match;
+        const guild = client.guilds.cache.get(guildId);
+        const channel = guild.channels.cache.get(channelId);
+        const linkMsg = await channel.messages.fetch(messageId);
+
+        const author = linkMsg.member
+          ? linkMsg.member.displayName
+          : linkMsg.author.displayName;
+
+        const linkText = `${author} — past\n${linkMsg.cleanContent}`;
+        msgContent = linkText +
+          '\n--- Referred to by the following message ---\n' + msgContent;
+      }
     } else {
       try {
         const headRes = await fetch(url, { method: 'HEAD' });
