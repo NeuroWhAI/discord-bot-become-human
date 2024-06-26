@@ -39,7 +39,7 @@ export class ChatBuffer {
 
       // 오래된 기록은 삭제.
       // 더 오래된 기록까지 보관하게 되면 파일 URL이 만료되는 문제도 있음.
-      const longTime = 6 * 24 * 3600 * 1000;
+      const longTime = 6 * 3600 * 1000;
       for (let i = buffer.length - 1; i >= 0; i--) {
         const msg = buffer[i];
         if (currentTime - msg.date.getTime() > longTime) {
