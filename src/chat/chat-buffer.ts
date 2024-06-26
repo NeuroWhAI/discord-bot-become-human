@@ -53,7 +53,7 @@ export class ChatBuffer {
 
     // 메모리 부족 방지로 단순 개수 제한.
     // 이게 컨텍스트 제한이 되는 건 아님.
-    const maxCount = 50;
+    const maxCount = 16;
     if (buffer.length > maxCount) {
       buffer.splice(0, buffer.length - maxCount);
     }
