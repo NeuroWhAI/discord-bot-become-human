@@ -39,8 +39,7 @@ export class Agent {
   private context: Context;
   private readonly toolContext: ToolContext;
 
-  private incomingTextHistory: string = '';
-  private incomingMessages: AgentMessage[] = [];
+  private incomingMessages: ChatMessage[] = [];
   private thinking: boolean = false;
 
   private _chatting: boolean = false;
@@ -51,93 +50,87 @@ export class Agent {
     this._chatting = v;
   }
 
-  private processChatMessage(msg: ChatMessage) {
-    let text = `${msg.author} — ${localeDate(msg.date)}\n${msg.content}`;
+  private pipeChatMessage(messages: ChatMessage[]) {
+    let textHistory = '';
 
-    if (msg.imageUrls.length > 0) {
-      text += '\nattached image IDs:';
-      for (const imgUrl of msg.imageUrls) {
-        const id = this.toolContext.fileStorage.setImageUrl(imgUrl);
-        text += `\n- ${id}`;
-        console.log(`# Image ${id}: ${imgUrl}`);
-      }
-    }
-    if (msg.fileUrls.length > 0) {
-      text += '\nattached file IDs:';
-      for (const fileUrl of msg.fileUrls) {
-        const id = this.toolContext.fileStorage.setFileUrl(fileUrl);
-        text += `\n- ${id}`;
-        console.log(`# File ${id}: ${fileUrl}`);
-      }
-    }
+    for (const msg of messages) {
+      let text = `${msg.author} — ${localeDate(msg.date)}\n${msg.content}`;
 
-    let imageUrls: string[];
-
-    if (msg.refMessage) {
-      const refMsg = msg.refMessage;
-      let refText = `${refMsg.author} — past\n${refMsg.content}`;
-
-      if (refMsg.imageUrls.length > 0) {
-        refText += '\nattached image IDs:';
-        for (const imgUrl of refMsg.imageUrls) {
+      if (msg.imageUrls.length > 0) {
+        text += '\nattached image IDs:';
+        for (const imgUrl of msg.imageUrls) {
           const id = this.toolContext.fileStorage.setImageUrl(imgUrl);
-          refText += `\n- ${id}`;
+          text += `\n- ${id}`;
           console.log(`# Image ${id}: ${imgUrl}`);
         }
       }
-      if (refMsg.fileUrls.length > 0) {
-        refText += '\nattached file IDs:';
-        for (const fileUrl of refMsg.fileUrls) {
+      if (msg.fileUrls.length > 0) {
+        text += '\nattached file IDs:';
+        for (const fileUrl of msg.fileUrls) {
           const id = this.toolContext.fileStorage.setFileUrl(fileUrl);
-          refText += `\n- ${id}`;
+          text += `\n- ${id}`;
           console.log(`# File ${id}: ${fileUrl}`);
         }
       }
 
-      text = refText + '\n--- Referred to by the following message ---\n' +
-        text;
+      let imageUrls: string[];
 
-      imageUrls = [...refMsg.imageUrls, ...msg.imageUrls];
-    } else {
-      imageUrls = msg.imageUrls;
+      if (msg.refMessage) {
+        const refMsg = msg.refMessage;
+        let refText = `${refMsg.author} — past\n${refMsg.content}`;
+
+        if (refMsg.imageUrls.length > 0) {
+          refText += '\nattached image IDs:';
+          for (const imgUrl of refMsg.imageUrls) {
+            const id = this.toolContext.fileStorage.setImageUrl(imgUrl);
+            refText += `\n- ${id}`;
+            console.log(`# Image ${id}: ${imgUrl}`);
+          }
+        }
+        if (refMsg.fileUrls.length > 0) {
+          refText += '\nattached file IDs:';
+          for (const fileUrl of refMsg.fileUrls) {
+            const id = this.toolContext.fileStorage.setFileUrl(fileUrl);
+            refText += `\n- ${id}`;
+            console.log(`# File ${id}: ${fileUrl}`);
+          }
+        }
+
+        text = refText + '\n--- Referred to by the following message ---\n' +
+          text;
+
+        imageUrls = [...refMsg.imageUrls, ...msg.imageUrls];
+      } else {
+        imageUrls = msg.imageUrls;
+      }
+
+      if (textHistory) {
+        textHistory += `\n\n${text}`;
+      } else {
+        textHistory = text;
+      }
+
+      if (imageUrls.length) {
+        textHistory += '\n(attached images)';
+      }
+      if (msg.fileUrls.length || msg.refMessage?.imageUrls.length) {
+        textHistory += '\n(attached files)';
+      }
+
+      this.context.appendMessage({
+        role: 'user',
+        content: [
+          { type: 'text', text },
+          ...imageUrls.map((url) => ({
+            type: 'image_url' as const,
+            image_url: { url },
+          })),
+        ],
+        name: msg.authorId.replaceAll(/[^a-zA-Z0-9_-]/g, '_'),
+      }, msg.date);
     }
 
-    if (this.incomingTextHistory) {
-      this.incomingTextHistory += `\n\n${text}`;
-    } else {
-      this.incomingTextHistory = text;
-    }
-
-    if (imageUrls.length) {
-      this.incomingTextHistory += '\n(attached images)';
-    }
-    if (msg.fileUrls.length || msg.refMessage?.imageUrls.length) {
-      this.incomingTextHistory += '\n(attached files)';
-    }
-
-    this.incomingMessages.push({
-      role: 'user',
-      content: [
-        { type: 'text', text },
-        ...imageUrls.map((url) => ({
-          type: 'image_url' as const,
-          image_url: { url },
-        })),
-      ],
-      name: msg.authorId.replaceAll(/[^a-zA-Z0-9_-]/g, '_'),
-    });
-  }
-
-  private flushChatMessages() {
-    if (this.incomingTextHistory) {
-      this.context.appendHistory(this.incomingTextHistory);
-      this.incomingTextHistory = '';
-    }
-
-    if (this.incomingMessages.length > 0) {
-      this.incomingMessages.forEach((msg) => this.context.appendMessage(msg));
-      this.incomingMessages = [];
-    }
+    this.context.appendHistory(textHistory);
   }
 
   public async chat(
@@ -145,9 +138,7 @@ export class Agent {
     intermMsgCallback: (msg: string) => Promise<void>,
     fileCallback: (file: Uint8Array, format: string) => Promise<void>,
   ): Promise<string> {
-    for (const msg of newMessages) {
-      this.processChatMessage(msg);
-    }
+    this.incomingMessages.push(...newMessages);
 
     console.log(
       `# Incoming messages cnt: ${this.incomingMessages.length} + ${newMessages.length}`,
@@ -160,9 +151,12 @@ export class Agent {
 
     const backupContext = this.context.clone();
 
-    this.flushChatMessages();
-
     try {
+      this.pipeChatMessage(this.incomingMessages);
+      this.incomingMessages = [];
+
+      this.context.expireOldImages();
+
       const completion = await this.openai.chat.completions.create({
         model: this.model,
         // deno-lint-ignore no-explicit-any
