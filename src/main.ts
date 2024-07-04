@@ -205,7 +205,14 @@ async function makeChatMessageFrom(msg: Message): Promise<ChatMessage> {
         const linkText = `${author} — past\n${linkMsg.cleanContent}`;
         msgContent = linkText +
           '\n--- Referred to by the following message ---\n' + msgContent;
-      }
+
+        if (imageUrls.length === 0) {
+          const linkImgs = linkMsg.attachments
+            .map((attachment) => attachment.url)
+            .filter((url) => imageTypes.test(new URL(url).pathname))
+            .slice(0, 4);
+          imageUrls.push(...linkImgs);
+        }
     } else {
       try {
         const headRes = await fetch(url, { method: 'HEAD' });
