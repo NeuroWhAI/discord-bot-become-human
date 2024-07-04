@@ -213,6 +213,7 @@ async function makeChatMessageFrom(msg: Message): Promise<ChatMessage> {
             .slice(0, 4);
           imageUrls.push(...linkImgs);
         }
+      }
     } else {
       try {
         const headRes = await fetch(url, { method: 'HEAD' });
