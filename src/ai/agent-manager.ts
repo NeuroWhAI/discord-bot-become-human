@@ -47,6 +47,7 @@ export class AgentManager {
       agent = new Agent(
         openai,
         env.OPENAI_CHAT_MODEL,
+        this.agentName,
         this.interpolatePrompt(chatPrompt.trim()),
         this.interpolatePrompt(summarizePrompt.trim()),
         this.tools,

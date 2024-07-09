@@ -12,6 +12,7 @@ export class Agent {
   constructor(
     openai: OpenAI,
     model: string,
+    agentName: string,
     chatPrompt: string,
     summarizePrompt: string,
     tools: ChatCompletionTool[],
@@ -19,6 +20,7 @@ export class Agent {
   ) {
     this.openai = openai;
     this.model = model;
+    this.agentName = agentName;
     this.tools = tools;
     this.chatDB = chatDB;
 
@@ -33,6 +35,7 @@ export class Agent {
 
   private readonly openai: OpenAI;
   private readonly model: string;
+  private readonly agentName: string;
   private readonly tools: ChatCompletionTool[];
   private readonly chatDB: ChatDB;
 
@@ -237,7 +240,7 @@ export class Agent {
                   content: [
                     {
                       type: 'text',
-                      text: `assistant generated image (ID: ${imgId})`,
+                      text: `(ID: ${imgId})`,
                     },
                     { type: 'image_url', image_url: { url: toolRes } },
                   ],
@@ -303,7 +306,7 @@ export class Agent {
         }
 
         this.context.appendHistory(
-          `assistant — ${localeDate(new Date())}\n${resContent}`,
+          `${this.agentName} — ${localeDate(new Date())}\n${resContent}`,
         );
         this.context.appendMessage({
           role: res.role,
@@ -343,7 +346,7 @@ export class Agent {
       }`;
 
       this.context.appendHistory(
-        `assistant — ${localeDate(new Date())}\n${errMessage}`,
+        `${this.agentName} — ${localeDate(new Date())}\n${errMessage}`,
       );
       this.context.appendMessage({
         role: 'assistant',
