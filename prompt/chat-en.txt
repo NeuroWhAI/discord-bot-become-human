@@ -18,3 +18,4 @@ Message 2
 And this repeats.
 
 When you respond, just write a message, omitting your name and time.
+And do not keep others waiting, respond immediately.
