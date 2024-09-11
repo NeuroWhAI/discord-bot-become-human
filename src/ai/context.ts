@@ -1,16 +1,27 @@
 import OpenAI from 'openai';
 import { AgentMessage } from './message.ts';
+import { Memory } from './memory.ts';
 
 export class Context {
-  constructor(openai: OpenAI, model: string, summarizePrompt: string) {
+  constructor(
+    openai: OpenAI,
+    model: string,
+    summarizePrompt: string,
+    memorizerPrompt: string,
+    memory: Memory,
+  ) {
     this.openai = openai;
     this.model = model;
     this.summarizePrompt = summarizePrompt;
+    this.memorizerPrompt = memorizerPrompt;
+    this.memory = memory;
   }
 
   private readonly openai: OpenAI;
   private readonly model: string;
   private readonly summarizePrompt: string;
+  private readonly memorizerPrompt: string;
+  private readonly memory: Memory;
 
   private textHistory: string = '';
   private context: { msg: AgentMessage; date: Date }[] = [];
@@ -23,6 +34,14 @@ export class Context {
 
   public get size(): number {
     return this.context.length;
+  }
+
+  public setSystemPrompt(message: AgentMessage) {
+    if (this.context.length > 0) {
+      this.context[0].msg = message;
+    } else {
+      this.appendMessage(message);
+    }
   }
 
   public appendMessage(message: AgentMessage, date?: Date) {
@@ -47,7 +66,13 @@ export class Context {
   }
 
   public clone(): Context {
-    const ctx = new Context(this.openai, this.model, this.summarizePrompt);
+    const ctx = new Context(
+      this.openai,
+      this.model,
+      this.summarizePrompt,
+      this.memorizerPrompt,
+      this.memory,
+    );
     ctx.textHistory = this.textHistory;
     ctx.context = [...this.context];
     ctx.prevSummaryIndices = [...this.prevSummaryIndices];
@@ -65,7 +90,10 @@ export class Context {
   }
 
   public async compress(): Promise<string> {
-    const summary = await this.summarize(this.textHistory);
+    const [summary, _] = await Promise.all([
+      this.summarize(this.textHistory),
+      this.updateMemory(this.textHistory),
+    ]);
     const summaryContent =
       '--- Below is a summary of previous conversation ---\n\n' +
       summary +
@@ -134,9 +162,42 @@ export class Context {
       const res = completion.choices[0].message;
       const resContent = res.content?.trim() ?? '';
 
-      return resContent.trim();
+      return resContent;
     } catch (err) {
       return `Failed to summarize.\n${(err as Error).message}`;
+    }
+  }
+
+  private async updateMemory(textHistory: string) {
+    try {
+      let prompt = this.memorizerPrompt;
+      prompt += '\n\n--- Previous memory:\n\n' + this.memory.content;
+      prompt += '\n\n--- Conversation:\n\n' + textHistory;
+
+      const completion = await this.openai.chat.completions.create({
+        model: this.model,
+        messages: [
+          {
+            role: 'system',
+            content: `Today is ${new Date().toLocaleString()}`,
+            name: 'clock',
+          },
+          {
+            role: 'system',
+            content: prompt,
+          },
+        ],
+        temperature: 0.5,
+        top_p: 0.5,
+        max_tokens: 2048,
+      }, { timeout: 20000 });
+      const res = completion.choices[0].message;
+      const resContent = res.content?.trim() ?? '';
+
+      await this.memory.setContent(resContent);
+    } catch (err) {
+      console.log((err as Error).stack);
+      console.log(`Failed to update memory.\n${(err as Error).message}`);
     }
   }
 

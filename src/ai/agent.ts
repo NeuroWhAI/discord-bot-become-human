@@ -7,6 +7,7 @@ import { ChatCompletionTool, getTool, ToolContext } from './tool.ts';
 import { AgentMessage } from './message.ts';
 import { Context } from './context.ts';
 import { ChatDB } from '../db/chat-db.ts';
+import { Memory } from './memory.ts';
 
 export class Agent {
   constructor(
@@ -15,19 +16,33 @@ export class Agent {
     agentName: string,
     chatPrompt: string,
     summarizePrompt: string,
+    memorizerPrompt: string,
     tools: ChatCompletionTool[],
     chatDB: ChatDB,
+    memory: Memory,
   ) {
     this.openai = openai;
     this.model = model;
     this.agentName = agentName;
+    this.chatPrompt = chatPrompt;
     this.tools = tools;
     this.chatDB = chatDB;
+    this.memory = memory;
 
-    this.context = new Context(openai, model, summarizePrompt);
-    this.context.appendMessage({
+    this.context = new Context(
+      openai,
+      model,
+      summarizePrompt,
+      memorizerPrompt,
+      memory,
+    );
+    this.context.setSystemPrompt({
       role: 'system',
-      content: chatPrompt,
+      content: chatPrompt +
+        (memory.content
+          ? '\n\nUtilize the following memories in conversations:\n' +
+            memory.content
+          : ''),
     });
 
     this.toolContext = new ToolContext(chatDB);
@@ -36,8 +51,10 @@ export class Agent {
   private readonly openai: OpenAI;
   private readonly model: string;
   private readonly agentName: string;
+  private readonly chatPrompt: string;
   private readonly tools: ChatCompletionTool[];
   private readonly chatDB: ChatDB;
+  private readonly memory: Memory;
 
   private context: Context;
   private readonly toolContext: ToolContext;
@@ -159,6 +176,15 @@ export class Agent {
       this.incomingMessages = [];
 
       this.context.expireOldImages();
+
+      this.context.setSystemPrompt({
+        role: 'system',
+        content: this.chatPrompt +
+          (this.memory.content
+            ? '\n\nUtilize the following memories in conversations:\n' +
+              this.memory.content
+            : ''),
+      });
 
       const completion = await this.openai.chat.completions.create({
         model: this.model,

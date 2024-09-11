@@ -6,6 +6,7 @@ import { ChatMessage } from '../chat/chat-message.ts';
 import { Agent } from './agent.ts';
 import { ChatCompletionTool, getAllTools } from './tool.ts';
 import { ChatDB } from '../db/chat-db.ts';
+import { Memory } from './memory.ts';
 
 const openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
 
@@ -40,18 +41,28 @@ export class AgentManager {
       const chatDB = new ChatDB(openai, env.OPENAI_EMBEDDING_MODEL, channelId);
       this.chatDBs.set(channelId, chatDB);
 
+      await Deno.mkdir('memory', { recursive: true });
+      const memory = new Memory(`memory/m${channelId}.txt`);
+      await memory.load();
+
       const chatPrompt = await Deno.readTextFile('prompt/chat-en.txt');
       const summarizePrompt = await Deno.readTextFile(
         'prompt/summarize-en.txt',
       );
+      const memorizerPrompt = await Deno.readTextFile(
+        'prompt/memorizer-en.txt',
+      );
+
       agent = new Agent(
         openai,
         env.OPENAI_CHAT_MODEL,
         this.agentName,
         this.interpolatePrompt(chatPrompt.trim()),
         this.interpolatePrompt(summarizePrompt.trim()),
+        this.interpolatePrompt(memorizerPrompt.trim()),
         this.tools,
         chatDB,
+        memory,
       );
       this.agents.set(channelId, agent);
 
