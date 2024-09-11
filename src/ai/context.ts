@@ -15,6 +15,7 @@ export class Context {
   private textHistory: string = '';
   private context: { msg: AgentMessage; date: Date }[] = [];
   private prevSummaryIndices: number[] = [];
+  private clockAppended: boolean = false;
 
   public get messages(): ReadonlyArray<AgentMessage> {
     return this.context.map(({ msg }) => msg);
@@ -25,7 +26,16 @@ export class Context {
   }
 
   public appendMessage(message: AgentMessage, date?: Date) {
-    this.context.push({ msg: message, date: date || new Date() });
+    if (!date) {
+      date = new Date();
+    }
+
+    this.context.push({ msg: message, date });
+
+    if (!this.clockAppended) {
+      this.appendSystemClock(date);
+      this.clockAppended = true;
+    }
   }
 
   public appendHistory(history: string) {
@@ -99,6 +109,8 @@ export class Context {
       name: 'summarizer',
     });
 
+    this.clockAppended = false;
+
     return summary;
   }
 
@@ -167,5 +179,16 @@ export class Context {
         }
       }
     }
+  }
+
+  private appendSystemClock(date: Date) {
+    this.context.push({
+      msg: {
+        role: 'system',
+        content: `Today is ${date.toLocaleString()}. just for reference.`,
+        name: 'clock',
+      },
+      date,
+    });
   }
 }
