@@ -53,4 +53,5 @@ TAVILY_API_KEY={Tavily API Key}
 STABILITY_API_KEY={Stability API Key}
 RUNPOD_API_KEY={RunPod API Key}
 RUNPOD_ANIME_IMAGEN_ENDPOINT_ID={RunPod Anime Image Generation Endpoint ID : e.g. gblook0abcdefg}
+JINA_API_KEY={Jina API Key}
 ```
