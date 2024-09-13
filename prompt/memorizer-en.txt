@@ -17,7 +17,7 @@ Message 2
 And this repeats.
 
 The format of the memory is as follows:
-[Target user]
+[Target user or group name]
 Memory 1 | Updated time | Importance
 Memory 2 | Updated time | Importance
 ...

@@ -1,7 +1,7 @@
 export class Memory {
   constructor(filePath: string) {
     this.filePath = filePath;
-    this._content = '';
+    this._content = '[COMMON]';
   }
 
   private readonly filePath: string;
