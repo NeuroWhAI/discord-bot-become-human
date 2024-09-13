@@ -13,25 +13,41 @@ export const metadata: FunctionDefinition = {
   parameters: {
     type: 'object',
     properties: {
-      query: {
+      query_or_url: {
         type: 'string',
-        description: 'The search query string',
+        description: 'The search query string or URL',
       },
       include_details: {
         type: 'boolean',
-        description: 'Include raw content in the search results',
+        description: 'Include raw content in the search results for query',
       },
       include_images: {
         type: 'boolean',
-        description: 'Include a list of related images in the response',
+        description:
+          'Include a list of related images in the response for query',
       },
     },
-    required: ['query'],
+    required: ['query_or_url'],
   },
 };
 
 export async function execute(arg: string, _ctx: ToolContext): Promise<string> {
-  const { query, include_details, include_images } = JSON.parse(arg);
+  const { query_or_url, include_details, include_images } = JSON.parse(arg);
+
+  if (
+    query_or_url.startsWith('http://') || query_or_url.startsWith('https://')
+  ) {
+    return await getUrlContent(query_or_url);
+  } else {
+    return await searchQuery(query_or_url, include_details, include_images);
+  }
+}
+
+async function searchQuery(
+  query: string,
+  include_details: boolean,
+  include_images: boolean,
+) {
   const requestPayload: SearchRequest = {
     api_key: env.TAVILY_API_KEY,
     query,
@@ -89,6 +105,23 @@ URL: ${result.url}` + imagesStr +
       1,
     );
   }
+}
+
+async function getUrlContent(url: string) {
+  const res = await fetch('https://r.jina.ai/' + url, {
+    method: 'GET',
+    headers: {
+      'Authorization': 'Bearer ' + env.JINA_API_KEY,
+      'X-Timeout': '10',
+      'X-Locale': 'ko-KR',
+      'X-With-Generated-Alt': 'true',
+    },
+  });
+  if (!res.ok) {
+    return `HTTP error! Status: ${res.status}`;
+  }
+
+  return await res.text();
 }
 
 interface SearchRequest {

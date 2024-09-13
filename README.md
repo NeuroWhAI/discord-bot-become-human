@@ -27,7 +27,7 @@ OpenAI 대화 모델을 적절히 사용하여 디스코드 채널에서 자연�
 - [x] 대화 중지 또는 주제 전환시 이전 대화를 내부적으로 요약.
 - [x] 함수 호출 기능 사용하여 기능 확장.
   - [x] 현재 날씨 및 예보 조회. ([Weatherbit](https://www.weatherbit.io/))
-  - [x] 인터넷 검색. ([Tavily AI](https://tavily.com/))
+  - [x] 인터넷 검색 또는 URL 읽기. ([Tavily AI](https://tavily.com/), [Jina AI](https://jina.ai/))
   - [x] 이미지 생성. ([Stability AI](https://platform.stability.ai/), [RunPod Fooocus](https://github.com/NeuroWhAI/RunPod-Fooocus-API))
   - [x] 코드 실행. ([Pyodide](https://pyodide.org/en/stable/))
   - [x] 이전 대화 검색. ([Chroma](https://www.trychroma.com/))
