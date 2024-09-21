@@ -34,4 +34,4 @@ like to play game. | 2024-8-15 | B
 has a cat. | 2024-2-12 | D
 want assistant to be cute. | 2023-11-12 | A
 
-Now I'll give you the previous memory and the conversation, so please follow the instructions and only output the updated memory.
+Now I'll give you the previous memory and the conversation, so follow the instructions to update the previous memory and only print that out.
