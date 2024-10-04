@@ -197,22 +197,27 @@ async function makeChatMessageFrom(msg: Message): Promise<ChatMessage> {
         const guild = client.guilds.cache.get(guildId);
         const channel = guild?.channels.cache.get(channelId);
         if (channel) {
-          const linkMsg = await channel.messages.fetch(messageId);
+          try {
+            const linkMsg = await channel.messages.fetch(messageId);
 
-          const author = linkMsg.member
-            ? linkMsg.member.displayName
-            : linkMsg.author.displayName;
+            const author = linkMsg.member
+              ? linkMsg.member.displayName
+              : linkMsg.author.displayName;
 
-          const linkText = `${author} — past\n${linkMsg.cleanContent}`;
-          msgContent = linkText +
-            '\n--- Referred to by the following message ---\n' + msgContent;
+            const linkText = `${author} — past\n${linkMsg.cleanContent}`;
+            msgContent = linkText +
+              '\n--- Referred to by the following message ---\n' + msgContent;
 
-          if (imageUrls.length === 0) {
-            const linkImgs = linkMsg.attachments
-              .map((attachment) => attachment.url)
-              .filter((url) => imageTypes.test(new URL(url).pathname))
-              .slice(0, 4);
-            imageUrls.push(...linkImgs);
+            if (imageUrls.length === 0) {
+              const linkImgs = linkMsg.attachments
+                .map((attachment) => attachment.url)
+                .filter((url) => imageTypes.test(new URL(url).pathname))
+                .slice(0, 4);
+              imageUrls.push(...linkImgs);
+            }
+          } catch (err) {
+            console.log(`Failed to get link message from ${url}`);
+            console.log((err as Error).stack);
           }
         }
       }
