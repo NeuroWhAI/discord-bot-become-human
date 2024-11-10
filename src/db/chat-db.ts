@@ -21,6 +21,8 @@ export class ChatDB {
   private readonly channelId: string;
 
   public async store(document: string) {
+    const now = new Date();
+
     const docBuffer = new TextEncoder().encode(document);
     const hashBuffer = await crypto.subtle.digest('SHA-256', docBuffer);
     const id = encodeHex(hashBuffer);
@@ -30,7 +32,7 @@ export class ChatDB {
 
     const res = await collection.add({
       ids: id,
-      documents: document,
+      documents: `[${now.toLocaleString()}]\n` + document,
       embeddings: embedding,
     });
 
