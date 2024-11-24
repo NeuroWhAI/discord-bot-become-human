@@ -7,7 +7,7 @@
     "std/": "https://deno.land/std@0.224.0/",
     "opengraph": "https://deno.land/x/opengraph@v1.0.0/mod.ts",
     "discord.js": "npm:discord.js@14.16.1",
-    "openai": "npm:openai@4.58.1",
+    "openai": "npm:openai@4.73.0",
     "pyodide": "npm:pyodide@0.26.2",
     "mime-types": "npm:mime-types@2.1.35",
     "chromadb": "npm:chromadb@1.8.1"

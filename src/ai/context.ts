@@ -170,8 +170,7 @@ export class Context {
 
   private async updateMemory(textHistory: string) {
     try {
-      let prompt = this.memorizerPrompt;
-      prompt += '\n\n--- Previous memory:\n\n' + this.memory.content;
+      let prompt = '--- Previous memory:\n\n' + this.memory.content;
       prompt += '\n\n--- Conversation:\n\n' + textHistory;
 
       const completion = await this.openai.chat.completions.create({
@@ -179,14 +178,17 @@ export class Context {
         messages: [
           {
             role: 'system',
-            content: `Today is ${new Date().toLocaleString()}`,
-            name: 'clock',
+            content: this.memorizerPrompt,
           },
           {
-            role: 'system',
-            content: prompt,
+            role: 'user',
+            content: `Today is ${new Date().toLocaleString()}\n\n` + prompt,
           },
         ],
+        prediction: {
+          type: 'content',
+          content: this.memory.content,
+        },
         temperature: 0.5,
         top_p: 0.5,
         max_tokens: 2048,
