@@ -40,7 +40,7 @@ export class Agent {
       role: 'system',
       content: chatPrompt +
         (memory.content
-          ? '\n\nUtilize the following memories in conversations:\n' +
+          ? '\n\nActively utilize the following memories in conversations to foster meaningful and lasting social relationships:\n' +
             memory.content
           : ''),
     });
