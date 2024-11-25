@@ -31,6 +31,7 @@ OpenAI 대화 모델을 적절히 사용하여 디스코드 채널에서 자연�
   - [x] 이미지 생성. ([Stability AI](https://platform.stability.ai/), [RunPod Fooocus](https://github.com/NeuroWhAI/RunPod-Fooocus-API))
   - [x] 코드 실행. ([Pyodide](https://pyodide.org/en/stable/))
   - [x] 이전 대화 검색. ([Chroma](https://www.trychroma.com/))
+  - [x] 복잡한 질문에 대해 추론. ([OpenAI](https://platform.openai.com/docs/guides/reasoning))
 - [x] 이전 대화들을 정리하여 임베딩 계산 후 DB에 저장.
 - [x] 메모장 느낌으로 채널과 사람에 대해 기억하고 대화에 활용.
 - [ ] 좀 더 똑똑하게 대화 참여 및 나가기.
@@ -45,6 +46,7 @@ DISCORD_TOKEN={Discord Bot Token}
 CHANNEL_WHITELIST={Discord Channel IDs : e.g. 321545304510012344,321545304510012345}
 OPENAI_API_KEY={OpenAI API Key}
 OPENAI_CHAT_MODEL={e.g. gpt-4o}
+OPENAI_REASONING_MODEL={e.g. o1-mini}
 OPENAI_EMBEDDING_MODEL={e.g. text-embedding-3-large}
 CHROMA_DB_URL={e.g. http://localhost:8000}
 
